@@ -9,19 +9,18 @@ class Router():
     def __init__(self, routes):
         self.routes = routes
 
-    def get_route(self, path):
+    def get_route(self, request):
         """
         Return the callable for this route.
         Returns Route instance.
         """
         found = None
         for route_params in self.routes:
-            candidate = route_params['path']
 
-            if not self.__is_found(candidate, path):
+            if not self.__match(route_params, request):
                 continue
 
-            found = Route(route_params, path)
+            found = Route(route_params, request.path)
             break
         
         if not found:
@@ -29,8 +28,22 @@ class Router():
 
         return found
 
-    def __is_found(self, candidate, requested):
+    def __match(self, route_params, request):
+        """Check if route params match method, path, etc of request."""
+        # Method match?
+        try:
+            method = route_params['method']
+            if method.upper() != request.method.upper():
+                return False
+        except KeyError:
+            # No method so don't filter by it.
+            pass
+
+        return self.__is_route_match(route_params['path'], request.path)
+
+    def __is_route_match(self, candidate, requested):
         """Return dictionary of callables."""
+        # TODO implement a better algorithm for this (more efficient)
         # split and remove empty.
         requested = [piece for piece in requested.split('/') if piece != '']
         candidate = [piece for piece in candidate.split('/') if piece != '']

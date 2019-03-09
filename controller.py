@@ -9,7 +9,10 @@ from framework.forms.form import Form
 
 class Controller(object):
 
+    # The form to use. Default form does nothing and expects nothing.
     form = Form
+    # defines if the subclass of this controller will handle validation.
+    self_validating = False
 
     def __init__(self):
         """Declare class attributes."""
@@ -29,9 +32,8 @@ class Controller(object):
 
         # Form handling
         self.form = self._form_setup()
-        if not self.form.validate():
-            # Redirect back one page and apply errors.
-            return 'Form Error: ' + str(self.form.errors)
+        if not self.__class__.self_validating and not self.form.validate():
+            self.form_invalid()
         self.form.extract()
 
         # View handling
@@ -44,6 +46,9 @@ class Controller(object):
         form = self.__class__.form()
         form.request = self.request
         return form
+
+    def form_invalid(self):
+        """What to do if the form is invalid."""
 
     def view(self):
         """

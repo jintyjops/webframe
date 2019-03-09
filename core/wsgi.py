@@ -2,7 +2,7 @@
 from framework.core.http.requests import Request
 from framework.core.http.responses import Response
 from importlib import reload
-from framework.core.routes.route import Router
+from framework.core.route import Router
 from framework.utils import errors
 from framework.core import app
 import sys
@@ -21,7 +21,7 @@ class WSGIApp(object):
         request = Request(environ)
         response = Response()
         try:
-            route = app.router.get_route(request.path)
+            route = app.router.get_route(request)
             request.set_route(route)
             try:
                 response.text = self.get_response(route, request, response)

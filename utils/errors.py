@@ -37,7 +37,7 @@ class HttpError(Exception):
         return '<h1>' + message + '</h1>'
 
 
-class DebugError(Exception):
+class DebugError(HttpError):
 
     def __init__(self, message):
         self.message = message

@@ -15,7 +15,6 @@ class Form(object):
     def validate(self):
         # Get rules
         rules = self.rules()
-        print(rules)
         for name, validator_list in rules.items():
             for validator in validator_list:
                 msg = validator(name, self)
