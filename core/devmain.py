@@ -14,13 +14,17 @@ class DevApp(object):
         self.server_thread = None
         self.old_module_val = None
 
-        self.__make_server()
-        self.__check_shutdown()
+        try:
+            self.__make_server()
+            self.__check_shutdown()
+        except KeyboardInterrupt:
+            if self.server_thread:
+                self.server_thread.close()
 
     def __check_shutdown(self):
         while True:
             time.sleep(0.1)
-            if self.__has_changed(self.app.__file__ + '/../'):
+            if self.__has_changed(self.app.__file__ + '/../') or self.server_thread.failed:
                 print('closing server')
                 self.server_thread.close()
                 self.app = reload(self.app)
@@ -35,8 +39,10 @@ class DevApp(object):
 
     def __make_server(self):
         # start server
+        wsgiapp = wsgi.WSGIApp(self.app)
         self.server_thread = DevServerThread(
-            self.app.settings
+            self.app.settings,
+            wsgiapp
         )
         # Don't let server thread continue if main thread goes down.
         self.server_thread.daemon = True
@@ -46,17 +52,23 @@ class DevApp(object):
 
 class DevServerThread(Thread):
 
-    def __init__(self, settings):
+    def __init__(self, settings, wsgiapp):
         Thread.__init__(self)
         self.settings = settings
+        self.wsgiapp = wsgiapp
         self.server = None
+        self.failed = False
 
     def run(self):
         domain = self.settings.HOST
         if self.settings.PORT:
             domain += ':' + str(self.settings.PORT)
-        self.server = waitress.server.create_server(wsgi.app, listen=domain)
-        self.server.run()
+        try:
+            self.server = waitress.server.create_server(self.wsgiapp, listen=domain, channel_timeout=1)
+            self.server.run()
+        except Exception:
+            print('server failed, retrying...')
+            self.failed = True
 
     def close(self):
         self.server.close()
