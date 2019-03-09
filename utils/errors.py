@@ -7,10 +7,15 @@ def abort(code, message=None):
     raise HttpError(code, message)
 
 
+def debug(to_print):
+    """Debugging utility to print to the page."""
+    raise DebugError(to_print.__repr__())
+
+
 class HttpError(Exception):
     """Wrapper for http errors."""
 
-    def __init__(self, code, message):
+    def __init__(self, code, message=None):
         if code < 100 or code >= 600:
             raise ValueError('Code ' + str(code) + ' is not a valid http status code.')
         self.code = code
@@ -22,9 +27,17 @@ class HttpError(Exception):
         
         if code == 404:
             return self.__surround_h1(str(code) + ': could not find page :(')
-        # TODO more standard errors
+        
+        if 500 <= code < 600:
+            return self.__surround_h1(str(code) + ': Server error')
 
         return self.__surround_h1(str(code) + ': Oops there was an error.')
 
     def __surround_h1(self, message):
         return '<h1>' + message + '</h1>'
+
+
+class DebugError(Exception):
+
+    def __init__(self, message):
+        self.message = message

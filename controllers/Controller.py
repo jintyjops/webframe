@@ -5,8 +5,11 @@ Each controller will implement a view method which will be in
 charge of returning a string.
 """
 from framework.utils import errors
+from framework.forms.form import Form
 
 class Controller(object):
+
+    form = Form
 
     def __init__(self):
         """Declare class attributes."""
@@ -19,15 +22,28 @@ class Controller(object):
         self.request = request
         self.response = response
 
-        self.form = self.form_setup()
+        # Order of operations for controller
+
+        # Middleware
+        # TODO write middleware
+
+        # Form handling
+        self.form = self._form_setup()
+        if not self.form.validate():
+            # Redirect back one page and apply errors.
+            return 'Form Error: ' + str(self.form.errors)
+        self.form.extract()
+
+        # View handling
         return self.view()
 
-    def form_setup(self):
+    def _form_setup(self):
         """
         For initialising and setting up a form.
-        Implement if this controller will handle form input.
         """
-        return None
+        form = self.__class__.form()
+        form.request = self.request
+        return form
 
     def view(self):
         """

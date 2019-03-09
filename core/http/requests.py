@@ -7,13 +7,16 @@ class Request(webob.Request):
 
     def __init__(self, environ):
         webob.Request.__init__(self, environ)
+        self.route = None
 
     def set_route(self, route):
         """
         Set the route generated from the routing process.
         Expecting Type: Route
         """
+        # Warning: this is ovewriting webob.Request.urlargs
         self.urlargs = route.params()
+        self.route = route
 
     def url_param(self, name):
         return self.urlargs[name]
