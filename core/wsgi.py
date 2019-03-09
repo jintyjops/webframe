@@ -1,5 +1,6 @@
 """The WSGI entry/communication point for the app."""
-from webob import Request, Response
+from framework.core.http.requests import Request
+from framework.core.http.responses import Response
 from importlib import reload
 from framework.core.routes.route import Router
 from framework.utils import errors
@@ -20,12 +21,13 @@ class WSGIApp(object):
         response = Response()
         try:
             route = app.router.get_route(request.path)
-            response.text = self.set_response(route)
+            request.set_route(route)
+            response.text = self.set_response(route, request, response)
         except errors.HttpError as e:
             response.status = e.code
             response.text = e.message
         #response.text = self.get_route(request.path)
         return response(environ, start_response)
 
-    def set_response(self, Route):
-        return Route.callable()
+    def set_response(self, Route, request, response):
+        return Route.callable(request, response)

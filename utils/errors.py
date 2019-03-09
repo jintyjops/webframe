@@ -1,5 +1,7 @@
 """Utility function to throw errors."""
 
+from framework.core import app
+
 def abort(code, message=None):
     """Throw a http status error."""
     raise HttpError(code, message)
@@ -15,7 +17,7 @@ class HttpError(Exception):
         self.message = self.__generate_message(code, message)
 
     def __generate_message(self, code, message):
-        if message is not None:
+        if message is not None and app.userapp.settings.DEBUG:
             return self.__surround_h1(str(code) + ': ' + message)
         
         if code == 404:
