@@ -3,23 +3,24 @@ from webob import Request, Response
 from importlib import reload
 from framework.core.routes.route import Router
 from framework.utils import errors
+from framework.core import app
 
 
 class WSGIApp(object):
     """The app entry point from a wsgi call."""
 
-    def __init__(self, app):
-        self.app = app
-        self.router = Router(self.app.routes.route.routes)
+    def __init__(self, userapp):
+        # Set up global variables
+        app.userapp = userapp
+        app.router = Router(app.userapp.routes.route.routes)
 
     def __call__(self, environ, start_response):
         """The app entry point."""
         request = Request(environ)
         response = Response()
         try:
-            route = self.router.get_route(request.path)
+            route = app.router.get_route(request.path)
             response.text = self.set_response(route)
-            print(route.params())
         except errors.HttpError as e:
             response.status = e.code
             response.text = e.message
