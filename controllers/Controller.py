@@ -12,13 +12,22 @@ class Controller(object):
         """Declare class attributes."""
         self.request = None
         self.response = None
+        self.form = None
 
     def __call__(self, request, response):
         """Call the controller instance."""
         self.request = request
         self.response = response
 
+        self.form = self.form_setup()
         return self.view()
+
+    def form_setup(self):
+        """
+        For initialising and setting up a form.
+        Implement if this controller will handle form input.
+        """
+        return None
 
     def view(self):
         """

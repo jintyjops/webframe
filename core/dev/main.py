@@ -1,9 +1,11 @@
 from threading import Thread
+import sys
 from importlib import reload
 import time
 import waitress
 import checksumdir
 import framework.core.wsgi as wsgi
+import framework.core.app as frameworkapp
 
 
 class DevApp(object):
@@ -25,9 +27,8 @@ class DevApp(object):
         while True:
             time.sleep(0.1)
             if self.__has_changed(self.app.__file__ + '/../') or self.server_thread.failed:
-                print('closing server')
+                print('closing server...')
                 self.server_thread.close()
-                self.app = reload(self.app)
                 self.__make_server()
 
     def __has_changed(self, path):
@@ -39,6 +40,7 @@ class DevApp(object):
 
     def __make_server(self):
         # start server
+        self.__reload_app(self.app)
         wsgiapp = wsgi.WSGIApp(self.app)
         self.server_thread = DevServerThread(
             self.app.settings,
@@ -46,8 +48,16 @@ class DevApp(object):
         )
         # Don't let server thread continue if main thread goes down.
         self.server_thread.daemon = True
-        print('starting new server')
+        print('starting new server...')
         self.server_thread.start()
+
+    def __reload_app(self, userapp):
+        """Reload the app."""
+        # This is hacky and horrible.
+        for module in sys.modules:
+            if module.split('.')[0] == userapp.__name__:
+                reload(sys.modules.get(module))
+        reload(frameworkapp)
 
 
 class DevServerThread(Thread):

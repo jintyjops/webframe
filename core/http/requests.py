@@ -17,3 +17,25 @@ class Request(webob.Request):
 
     def url_param(self, name):
         return self.urlargs[name]
+
+    def input(self, name):
+        """Get input, attempts to get value from GET then POST."""
+        val = self.get(name)
+        if val is None:
+            val = self.post(name)
+
+        return val
+        
+    def post(self, name):
+        """Get POST data."""
+        try:
+            return self.POST[name]
+        except KeyError:
+            return None
+    
+    def get(self, name):
+        """Get GET data."""
+        try:
+            return self.GET[name]
+        except KeyError:
+            return None
