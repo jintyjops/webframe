@@ -64,7 +64,8 @@ class Controller(object):
 
     def form_invalid(self):
         """What to do if the form is invalid."""
-        # TODO redirect back!
+        self.request.session.flash('errors', self.form.errors)
+        self.response.redirect_back()
 
     def view(self):
         """

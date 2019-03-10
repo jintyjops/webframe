@@ -9,7 +9,7 @@ class Request(webob.Request):
     def __init__(self, environ):
         webob.Request.__init__(self, environ)
         self.route = None
-        # self.session = Session(self)
+        self.session = None
 
     def set_route(self, route):
         """

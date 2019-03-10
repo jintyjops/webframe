@@ -19,7 +19,7 @@ class WSGIApp(object):
     def __call__(self, environ, start_response):
         """The app entry point."""
         request = Request(environ)
-        response = Response()
+        response = Response(request)
         try:
             route = app.router.get_route(request)
             request.set_route(route)

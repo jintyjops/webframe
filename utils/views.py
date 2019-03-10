@@ -10,4 +10,4 @@ def view(template, arguments=None):
 def direct_view(template_data, arguments=None):
     """Get the direct view."""
     # TODO make this function.
-    return template_data
+    return template_data + str(arguments)

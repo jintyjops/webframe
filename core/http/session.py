@@ -1,38 +1,69 @@
 """Session handler for the framework."""
 import os
 from base64 import b64encode
+import time
 
 class Session(object):
+
+    # 32 characters should be enough.
+    TOKEN_LENGTH = 32
+    # In seconds
+    TOKEN_LIFE = 300
 
     # in memory session handler.
     # dict of form {token: {key: value, etc...}, etc...}
     session = {}
 
+    # TODO handle expiry of tokens.
+
     def __init__(self, request):
         """Initialise session for this user."""
         self.request = request
-        cookies = self.request.headers['Cookie']
+        try:
+            # Check for key error.
+            self.request.headers['Cookie']
+            cookies = self.request.cookies
+        except KeyError:
+            self.request.headers['Cookie'] = ''
+            cookies = self.request.cookies
         try:
             self.token = cookies['session']
         except KeyError:
-            # 32 characters should be enough.
-            self.token = self.__generate_session_token(32)
-        
-        self.__get_or_create()
+            self.token = self.__generate_new_session_token(Session.TOKEN_LENGTH)
 
-    def __generate_session_token(self, length):
+        self.__create_if_not_exists()
+        self.__clear_flash()
+
+    def __generate_new_session_token(self, length):
         # Just in case ;)
         while True:
             token = b64encode(os.urandom(length))
             try:
                 Session.session[token]
-                return token
             except KeyError:
-                continue
+                break
 
-    def __get_or_create(self):
+        return str(token)
+
+    def __create_if_not_exists(self):
         """Try to get or create then return a session with the current token."""
-        return Session.session.setdefault(self.token, [])
+        try:
+            Session.session[self.token]
+        except KeyError:
+            self.token = self.__generate_new_session_token(Session.TOKEN_LENGTH)
+            Session.session[self.token] = {
+                'expiry': time.time() + Session.TOKEN_LIFE,
+                'flash': {}
+            }
+
+    def __clear_flash(self):
+        try:
+            if not self.get('dont_clear_flash'):
+                raise KeyError()
+        except KeyError:
+            Session.session[self.token]['flash'] = {}
+
+        self.delete('dont_clear_flash')
 
     def get(self, key):
         """Get a value from the current session."""
@@ -41,6 +72,21 @@ class Session(object):
     def store(self, key, value):
         """Store a value in the session."""
         Session.session[self.token][key] = value
+
+    def delete(self, key):
+        """Delete a value from the session. Fails silently."""
+        try:
+            del Session.session[self.token][key]
+        except KeyError:
+            pass
+
+    def flash(self, key, value):
+        """Store a value for one request/response cycle."""
+        Session.session[self.token]['flash'][key] = value
+
+    def flash_data(self):
+        """Get values only available for one request/response cycle."""
+        return Session.session[self.token]['flash']
 
     def set_response_session_token(self, response, path="/", max_age=3600):
         response.set_cookie('session', self.token)

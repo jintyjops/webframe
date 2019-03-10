@@ -4,7 +4,7 @@ import parse
 from framework.core import app
 from framework.utils.errors import abort
 
-def reverse(name, args={}):
+def url(name, args={}):
     """Reverse the route in the routes file"""
     routes = app.userapp.routes.route.routes
 
