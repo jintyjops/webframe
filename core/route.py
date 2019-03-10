@@ -68,17 +68,28 @@ class Route():
     def __init__(self, route_params, path):
         self.route_params = route_params
 
-        # the route paramaters
-        self.parsed_path = parse(route_params['path'], path)
+        # extract the route parameters
+        parsed_path = parse(route_params['path'], path)
+        self.params = {}
+        if parsed_path:
+            self.params = parsed_path.named
+
         self.callable = route_params['command']
+
         self.name = None
         try:
             self.name = route_params['name']
         except KeyError:
             pass
 
-    def params(self):
-        """Get the route parameters."""
-        if self.parsed_path:
-            return self.parsed_path.named
-        return {}
+        self.middleware = []
+        try:
+            self.middleware = route_params['middleware']
+        except KeyError:
+            pass
+
+        self.method = None
+        try:
+            self.method = route_params['method']
+        except KeyError:
+            pass

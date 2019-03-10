@@ -6,6 +6,7 @@ charge of returning a string.
 """
 from framework.utils import errors
 from framework.forms.form import Form
+from framework.core import app
 
 class Controller(object):
 
@@ -28,7 +29,7 @@ class Controller(object):
         # Order of operations for controller
 
         # Middleware
-        # TODO write middleware
+        self.__run_middleware()
 
         # Form handling
         self.form = self._form_setup()
@@ -38,6 +39,20 @@ class Controller(object):
 
         # View handling
         return self.view()
+
+    def __run_middleware(self):
+        """
+        Run the middleware for the route.
+        Returning from middleware will do nothing. The middleware should
+        either call abort() or response.force_redirect()
+        """
+        # To collect: global middleware, route specific middleware.
+        # Global middleware takes priority.
+        middleware = app.userapp.settings.GLOBAL_MIDDLEWARE +\
+                     self.request.route.middleware
+
+        for mware in middleware:
+            mware(self.request, self.response)
 
     def _form_setup(self):
         """
@@ -49,6 +64,7 @@ class Controller(object):
 
     def form_invalid(self):
         """What to do if the form is invalid."""
+        # TODO redirect back!
 
     def view(self):
         """

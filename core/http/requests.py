@@ -17,7 +17,7 @@ class Request(webob.Request):
         Expecting Type: Route
         """
         # Warning: this is ovewriting webob.Request.urlargs
-        self.urlargs = route.params()
+        self.urlargs = route.params
         self.route = route
 
     def url_param(self, name):

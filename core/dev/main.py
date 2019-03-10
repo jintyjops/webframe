@@ -27,9 +27,13 @@ class DevApp(object):
         while True:
             time.sleep(0.1)
             if self.__has_changed(self.app.__file__ + '/../') or self.server_thread.failed:
-                print('closing server...')
                 self.server_thread.close()
-                self.__make_server()
+                try:
+                    self.__make_server()
+                except Exception as e:
+                    print(e)
+                    self.server_thread.failed = False
+
 
     def __has_changed(self, path):
         new_val = checksumdir.dirhash(path)
@@ -76,7 +80,7 @@ class DevServerThread(Thread):
         try:
             self.server = waitress.server.create_server(self.wsgiapp, listen=domain, channel_timeout=1)
             self.server.run()
-        except Exception:
+        except:
             print('server failed, retrying...')
             self.failed = True
 
