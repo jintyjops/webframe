@@ -1,7 +1,7 @@
 """Wrapper class for webob request to add functionality in future."""
 
 import webob
-from framwork.core.http.session import Session
+from framework.core.http.session import Session
 
 
 class Request(webob.Request):
@@ -9,7 +9,7 @@ class Request(webob.Request):
     def __init__(self, environ):
         webob.Request.__init__(self, environ)
         self.route = None
-        self.session = Session(self)
+        # self.session = Session(self)
 
     def set_route(self, route):
         """

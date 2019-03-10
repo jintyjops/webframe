@@ -10,7 +10,7 @@ class Response(webob.Response):
 
     def redirect(self, location):
         """Redirect to specific location."""
-        self.code = 302
+        self.status = 302
         self.location = location
 
         return 'Redirecting...'
