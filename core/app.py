@@ -10,3 +10,6 @@ userapp = None
 
 # The router
 router = None
+
+# The DB session
+db = None

@@ -14,6 +14,7 @@ class Response(webob.Response):
         """Redirect to specific location."""
         self.status = 302
         self.location = location
+        # so the flash data doesn't get wasted on the redirect
         self.request.session.store('dont_clear_flash', True)
 
         return 'Redirecting...'
@@ -24,9 +25,14 @@ class Response(webob.Response):
             location = self.request.session.get('last_route')
         except KeyError:
             location = ''
-        
+
         return self.redirect(location)
         
     
     def force_redirect(self, location):
+        """Immediatly quit and redirect to specific location."""
         raise HttpError(302, self.redirect(location))
+
+    def force_redirect_back(self):
+        """Immediatly quit and redirect to previous location."""
+        raise HttpError(302, self.redirect_back())

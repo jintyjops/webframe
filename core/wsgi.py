@@ -1,11 +1,12 @@
 """The WSGI entry/communication point for the app."""
+
+import sys
+from importlib import reload
 from framework.core.http.requests import Request
 from framework.core.http.responses import Response
-from importlib import reload
 from framework.core.route import Router
-from framework.utils import errors
+from framework.utils import errors, db
 from framework.core import app
-import sys
 
 
 class WSGIApp(object):
@@ -15,6 +16,7 @@ class WSGIApp(object):
         # Set up global variables
         app.userapp = userapp
         app.router = Router(app.userapp.routes.route.routes)
+        app.db = db.make_session(userapp.settings.ENGINE);
 
     def __call__(self, environ, start_response):
         """The app entry point."""
@@ -27,6 +29,7 @@ class WSGIApp(object):
                 response.text = self.get_response(route, request, response)
             except errors.DebugError as e:
                 if app.userapp.settings.DEBUG:
+                    # TODO Include stack trace.
                     response.status = 500
                     response.text = e.message
                 else:
