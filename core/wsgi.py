@@ -16,7 +16,7 @@ class WSGIApp(object):
         # Set up global variables
         app.userapp = userapp
         app.router = Router(app.userapp.routes.route.routes)
-        app.db = db.make_session(userapp.settings.ENGINE);
+        app.db = db.make_session(userapp.settings.ENGINE)
 
     def __call__(self, environ, start_response):
         """The app entry point."""
