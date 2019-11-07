@@ -5,7 +5,8 @@ import traceback
 from importlib import reload
 from framework.core.http.requests import Request
 from framework.core.http.responses import Response
-from framework.core.route import Router
+from framework.core.route import Router, ResourceRoute
+from framework.utils.errors import abort
 from framework.utils import errors, db
 from framework.core import app
 
@@ -25,15 +26,19 @@ class WSGIApp(object):
         response = Response(request)
         try:
             route = app.router.get_route(request)
-            request.set_route(route)
-            try:
-                response.text = self.get_response(route, request, response)
-            except errors.DebugError as e:
-                if app.userapp.settings.DEBUG:
-                    response.status = 500
-                    response.text = traceback.format_exc()
-                else:
-                    raise errors.HttpError(500, '')
+
+            if isinstance(route, ResourceRoute):
+                response.text = self.get_resource_response(route)
+            else:
+                request.set_route(route)
+                try:
+                    response.text = self.get_response(route, request, response)
+                except errors.DebugError as e:
+                    if app.userapp.settings.DEBUG:
+                        response.status = 500
+                        response.text = traceback.format_exc()
+                    else:
+                        raise errors.HttpError(500, '')
         except errors.HttpError as e:
             response.status = e.code
             response.text = e.message
@@ -43,3 +48,12 @@ class WSGIApp(object):
 
     def get_response(self, Route, request, response):
         return Route.callable(request, response)
+
+    def get_resource_response(self, route):
+        """Serve a resource."""
+        try:
+            path = app.userapp.settings.RESOURCE_DIR + '/' + route.path
+            with open(path, 'r') as resource:
+                return resource.read()
+        except IOError:
+            abort(404)

@@ -2,6 +2,7 @@
 from urllib.parse import urlparse
 from parse import parse
 from framework.utils.errors import abort
+from framework.core import app
 
 class Router():
     """The router."""
@@ -14,6 +15,10 @@ class Router():
         Return the callable for this route.
         Returns Route instance.
         """
+        if app.userapp.settings.SERVE_PUBLIC:
+            if request.path.startswith(app.userapp.settings.RESOURCE_URL):
+                return ResourceRoute(request.path)
+
         found = None
         for route_params in self.routes:
 
@@ -93,3 +98,9 @@ class Route():
             self.method = route_params['method']
         except KeyError:
             pass
+
+class ResourceRoute():
+    """Wrapper for public resource route."""
+
+    def __init__(self, path):
+        self.path = path.split(app.userapp.settings.RESOURCE_URL)[1]

@@ -32,4 +32,4 @@ def __generate_url(route_params, args):
 
 def resource(path):
     """Prepend the resource location onto the given path."""
-    return app.userapp.settings.RESOURCE_DIR + '/' + path
+    return app.userapp.settings.RESOURCE_URL + '/' + path
