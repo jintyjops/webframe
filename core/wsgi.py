@@ -1,6 +1,7 @@
 """The WSGI entry/communication point for the app."""
 
 import sys
+import traceback
 from importlib import reload
 from framework.core.http.requests import Request
 from framework.core.http.responses import Response
@@ -29,9 +30,8 @@ class WSGIApp(object):
                 response.text = self.get_response(route, request, response)
             except errors.DebugError as e:
                 if app.userapp.settings.DEBUG:
-                    # TODO Include stack trace.
                     response.status = 500
-                    response.text = e.message
+                    response.text = traceback.format_exc()
                 else:
                     raise errors.HttpError(500, '')
         except errors.HttpError as e:

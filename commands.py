@@ -15,9 +15,6 @@ import framework.models as models
 from framework.seeds import seeder
 from framework.tests import unittest
 
-# Import all models here.
-from testapp.models import *
-
 def parse_commands(settings):
     """Initiation point for parsing out of project runtime commands."""
     arg1 = None
@@ -44,7 +41,7 @@ def _migrate(settings, arg):
     print('creating new database...')
     create_database(settings.DB_CONNECTION)
     print('creating tables...')
-    models.model.Base.metadata.create_all(settings.ENGINE)
+    models.model.Model.Base.metadata.create_all(settings.ENGINE)
 
     if arg == 'seed':
         seeder.run_seeds(settings.seed_list, settings.ENGINE)

@@ -1,11 +1,17 @@
+"""Development server started."""
+
+# ALL YE WHO ENTER TREMBLE IN FEAR. HERE BE DRAGONS.
+
 from threading import Thread
 import sys
 from importlib import reload
+import traceback
 import time
-import waitress
 import checksumdir
+import waitress
 import framework.core.wsgi as wsgi
 import framework.core.app as frameworkapp
+import framework.models.model as model
 
 
 class DevApp(object):
@@ -15,6 +21,8 @@ class DevApp(object):
         self.app = app
         self.server_thread = None
         self.old_module_val = None
+
+        self.firstRun = True
 
         try:
             self.__make_server()
@@ -26,12 +34,15 @@ class DevApp(object):
     def __check_shutdown(self):
         while True:
             time.sleep(0.1)
+            # XXX running this command once fixes a bug where app would run twice to start.
+            self.__has_changed(self.app.__file__ + '/../')
+
             if self.__has_changed(self.app.__file__ + '/../') or self.server_thread.failed:
                 self.server_thread.close()
                 try:
                     self.__make_server()
-                except Exception as e:
-                    print(e)
+                except Exception:
+                    print(traceback.format_exc())
                     self.server_thread.failed = False
 
 
@@ -44,7 +55,8 @@ class DevApp(object):
 
     def __make_server(self):
         # start server
-        self.__reload_app(self.app)
+        if not self.firstRun:
+            self.__reload_app(self.app)
         wsgiapp = wsgi.WSGIApp(self.app)
         self.server_thread = DevServerThread(
             self.app.settings,
@@ -54,6 +66,7 @@ class DevApp(object):
         self.server_thread.daemon = True
         print('starting new server...')
         self.server_thread.start()
+        self.firstRun = False
 
     def __reload_app(self, userapp):
         """Reload the app."""

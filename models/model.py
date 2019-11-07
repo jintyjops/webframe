@@ -6,12 +6,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String
 from framework.core import app
 
-# This is the Base sqlalchemy functionality
-# and should be inherited first.
-Base = declarative_base()
-
 class Model():
     """Functionality for models."""
+
+    # This is the Base sqlalchemy functionality
+    # and should be inherited first.
+    Base = declarative_base()
 
     id = Column(Integer, primary_key=True)
 
