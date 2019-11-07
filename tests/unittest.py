@@ -1,5 +1,6 @@
 """Runs unit tests."""
 
+import sys
 import traceback
 import time
 
@@ -76,7 +77,7 @@ class Tester:
         self.print_end_status(start_time)
 
     def print_status(self, status):
-        print(status, end='')
+        print(status, end='', flush=True)
         self.total += 1
 
         if self.total % LINE_COUNT == 0 and self.total != 0:

@@ -29,3 +29,7 @@ def __match_route(name, route_params):
 
 def __generate_url(route_params, args):
     return route_params['path'].format(**args)
+
+def resource(path):
+    """Prepend the resource location onto the given path."""
+    return app.userapp.settings.RESOURCE_DIR + '/' + path
