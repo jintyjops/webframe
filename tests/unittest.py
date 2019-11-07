@@ -3,10 +3,13 @@
 import traceback
 import time
 
-LINE_COUNT = 50
+from framework.tests.testutils import TestUtils
+from framework.tests import _assert
+
+LINE_COUNT = 25
 
 all_test_cases = {}
-all_tests = []
+all_tests = {}
 
 class _Watcher(type):
 
@@ -16,12 +19,21 @@ class _Watcher(type):
             all_test_cases[name] = cls
 
 
-class TestCase(metaclass=_Watcher):
+class TestCase(TestUtils, metaclass=_Watcher):
+    """Base test case."""
     pass
 
-def test(func):
-    all_tests.append(func)
-    return func
+class Test:
+    def __init__(self, cls_name):
+        self.cls_name = cls_name
+
+    def __call__(self, func):
+        """
+        Decorator that marks this function as a test.
+        Class methods which are decorated must be static (i.e. no self argument)
+        """
+        all_tests[func] = self.cls_name
+        return func
 
 def run_tests(function=None):
     Tester(all_tests, function).run()
@@ -34,6 +46,7 @@ class Tester:
         self.total = 0
         self.exceptions = {}
         self.assertion_errors = {}
+        self.risky_tests = {}
 
         if function is not None :
             self.all_tests = [f for f in self.all_tests if f.__name__ == function]
@@ -41,17 +54,24 @@ class Tester:
     def run(self):
         start_time = time.time()
 
-        for testfunc in self.all_tests:
+        for testfunc in self.all_tests.keys():
+            clsInstance = all_test_cases[self.all_tests[testfunc]]()
             try:
-                testfunc()
-            except AssertionError as e:
+                testfunc(clsInstance)
+
+                if _assert._AssertionCounter.getCount() <= 0:
+                    self.print_status('R')
+                    self.risky_tests[testfunc] = 'No assertions found in test.'
+                else:
+                    self.print_status('*')
+            except AssertionError:
                 self.assertion_errors[testfunc] = traceback.format_exc()
                 self.print_status('F'),
-            except Exception as e:
+            except Exception:
                 self.exceptions[testfunc] = traceback.format_exc()
                 self.print_status('E')
-            else:
-                self.print_status('*')
+            
+            _assert._AssertionCounter.clearCount()
 
         self.print_end_status(start_time)
 
@@ -69,28 +89,51 @@ class Tester:
 
     def print_end_status(self, start_time):
         time_string = self.get_time_string(time.time() - start_time)
-        if len(self.exceptions) == 0 and len(self.assertion_errors) == 0:
-            print (
-                str(len(self.all_tests)) + ' tests run in ' + time_string + '. No Errors.'
-            )
+        end = 'No issues.'
+        if len(self.exceptions) > 0:
+            end = 'Errors found.'
+        elif len(self.assertion_errors):
+            end = 'Failures found.'
+        elif(len(self.risky_tests) > 0):
+            end = 'No failures, risky tests found.'
+        
+        print (
+            str(len(self.all_tests)) +
+            ' tests and ' +
+            str(_assert._AssertionCounter.getTotal()) +
+            ' assertions run in ' +
+            time_string +
+            '. ' +
+            end
+        )
         
         for func in self.exceptions.keys():
             self.print_exception('Error', func, self.exceptions[func])
         for func in self.assertion_errors.keys():
             self.print_exception('Assertion Error', func, self.assertion_errors[func])
+        for func in self.risky_tests.keys():
+            self.print_risky(func, self.risky_tests[func])
 
     def print_exception(self, type, func, ex):
         print('\n--------------------------------\n')
         print(type + ' when running ' + str(func))
         print(ex)
 
-    def get_time_string(self, millis):
-        string = ''
-        minutes = (millis / (1000 * 60)) % 60
-        seconds = (millis / 1000) % 60
+    def print_risky(self, func, info):
+        print('\n--------------------------------\n')
+        print('Risky test: ' + info)
+        print(str(func))
+
+    def get_time_string(self, seconds):
+        _string = ''
+        minutes = (seconds / (60)) % 60
+        seconds = str((seconds) % 60)
+
+        if len(seconds) > 4:
+            seconds = seconds[:4]
 
         if minutes >= 1:
-            string += str(minutes) + ' minutes '
-        string += str(seconds) + ' seconds'
+            _string += str(minutes) + ' minutes '
+        _string += str(seconds) + ' seconds'
 
-        return string
+        return _string

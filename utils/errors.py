@@ -19,21 +19,21 @@ class HttpError(Exception):
         if code < 100 or code >= 600:
             raise ValueError('Code ' + str(code) + ' is not a valid http status code.')
         self.code = code
-        self.message = self.__generate_message(code, message)
+        self.message = self._generate_message(code, message)
 
-    def __generate_message(self, code, message):
+    def _generate_message(self, code, message):
         if message is not None and app.userapp.settings.DEBUG:
-            return self.__surround_h1(str(code) + ': ' + message)
+            return self._surround_h1(str(code) + ': ' + message)
         
         if code == 404:
-            return self.__surround_h1(str(code) + ': could not find page :(')
+            return self._surround_h1(str(code) + ': could not find page :(')
         
         if 500 <= code < 600:
-            return self.__surround_h1(str(code) + ': Server error')
+            return self._surround_h1(str(code) + ': Server error')
 
-        return self.__surround_h1(str(code) + ': Oops there was an error.')
+        return self._surround_h1(str(code) + ': Oops there was an error.')
 
-    def __surround_h1(self, message):
+    def _surround_h1(self, message):
         return '<h1>' + message + '</h1>'
 
 

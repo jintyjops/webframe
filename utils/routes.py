@@ -28,4 +28,4 @@ def __match_route(name, route_params):
         return False
 
 def __generate_url(route_params, args):
-    return route_params['path'].format(args)
+    return route_params['path'].format(**args)

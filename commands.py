@@ -31,7 +31,7 @@ def parse_commands(settings):
     if arg1 == 'migrate':
         _migrate(settings, arg2)
     elif arg1 == 'test':
-        _test(settings, arg2)
+        _test(arg2)
     else:
         _usage()
 
@@ -50,7 +50,7 @@ def _migrate(settings, arg):
         seeder.run_seeds(settings.seed_list, settings.ENGINE)
 
 
-def _test(settings, arg):
+def _test(arg):
     unittest.run_tests(arg)
 
 
