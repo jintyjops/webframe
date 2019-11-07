@@ -41,7 +41,7 @@ def run_tests(function=None):
 
 class Tester:
 
-    def __init__(self, all_tests, function=None):
+    def __init__(self, all_tests, function_filter=None):
         self.all_tests = all_tests
         self.line_count = 0
         self.total = 0
@@ -49,8 +49,12 @@ class Tester:
         self.assertion_errors = {}
         self.risky_tests = {}
 
-        if function is not None :
-            self.all_tests = [f for f in self.all_tests if f.__name__ == function]
+        if function_filter is not None :
+            self.all_tests = dict([
+                [f, self.all_tests[f]] 
+                for f in self.all_tests.keys() 
+                if function_filter in f.__name__
+            ])
 
     def run(self):
         start_time = time.time()
