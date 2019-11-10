@@ -11,9 +11,13 @@ class Model():
 
     # This is the Base sqlalchemy functionality
     # and should be inherited first.
-    Base = declarative_base()
+    Base = declarative_base(name='Base')
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, nullable=False)
+
+    __table_args__ = {
+        'mysql_engine': 'InnoDB'
+    }
 
     def stage(self):
         app.db.add(self)
