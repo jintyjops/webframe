@@ -69,8 +69,8 @@ class Tester:
                     self.risky_tests[testfunc] = 'No assertions found in test.'
                 else:
                     self.print_status('*')
-            except AssertionError:
-                self.assertion_errors[testfunc] = traceback.format_exc()
+            except AssertionError as e:
+                self.assertion_errors[testfunc] = e
                 self.print_status('F'),
             except Exception:
                 self.exceptions[testfunc] = traceback.format_exc()
