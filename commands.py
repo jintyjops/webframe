@@ -18,6 +18,7 @@ register-models
 import sys
 import os
 import glob
+import time
 import stringcase
 from sqlalchemy import MetaData
 from sqlalchemy_utils.functions import create_database, drop_database, database_exists
@@ -53,7 +54,9 @@ def _migrate(settings, arg):
     print('creating new database...')
     create_database(settings.DB_CONNECTION)
     print('creating tables...')
+    start_time = time.time()
     models.model.Model.Base.metadata.create_all(settings.ENGINE, checkfirst=False)
+    print('tables created in ' + str(time.time() - start_time)[:5] + ' seconds.')
 
     if arg == 'seed':
         seeder.run_seeds(settings.seed_list, settings.ENGINE)
