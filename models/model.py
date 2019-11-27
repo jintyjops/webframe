@@ -16,7 +16,8 @@ class Model():
     id = Column(Integer, primary_key=True, nullable=False)
 
     __table_args__ = {
-        'mysql_engine': 'InnoDB'
+        'mysql_engine': 'InnoDB',
+        'extend_existing': True,
     }
 
     def stage(self):
@@ -31,6 +32,11 @@ class Model():
     def save_all():
         """Commit all staged changes to the database."""
         app.db.commit()
+    
+    @staticmethod
+    def _remake_base():
+        """Utility method remaking the base on server restart."""
+        Model.Base = declarative_base(name='Base')
 
 
     

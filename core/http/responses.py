@@ -36,3 +36,6 @@ class Response(webob.Response):
     def force_redirect_back(self):
         """Immediatly quit and redirect to previous location."""
         raise HttpError(302, self.redirect_back())
+
+    def set_content_type(self, content_type):
+        self.content_type = content_type

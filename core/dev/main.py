@@ -32,14 +32,15 @@ class DevApp(object):
                 self.server_thread.close()
 
     def __check_shutdown(self):
+        # This saves the current directory.
+        self.__has_changed(self.app.__file__ + '/../')
         while True:
             time.sleep(0.1)
-            # XXX running this command once fixes a bug where app would run twice to start.
-            self.__has_changed(self.app.__file__ + '/../')
 
             if self.__has_changed(self.app.__file__ + '/../') or self.server_thread.failed:
                 self.server_thread.close()
                 try:
+                    model.Model._remake_base()
                     self.__make_server()
                 except Exception:
                     print(traceback.format_exc())
@@ -64,7 +65,7 @@ class DevApp(object):
         )
         # Don't let server thread continue if main thread goes down.
         self.server_thread.daemon = True
-        print('starting new server...')
+        # print('starting new server...')
         self.server_thread.start()
         self.firstRun = False
 
