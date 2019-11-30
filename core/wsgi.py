@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """The WSGI entry/communication point for the app."""
 
 import sys
@@ -54,7 +55,7 @@ class WSGIApp(object):
         """Serve a resource."""
         try:
             path = app.userapp.settings.RESOURCE_DIR + '/' + route.path
-            with open(path, 'r') as resource:
+            with open(path, 'r', encoding='utf8') as resource:
                 return resource.read()
         except IOError:
             abort(404)
