@@ -5,6 +5,7 @@ Each controller will implement a view method which will be in
 charge of returning a string.
 """
 from framework.utils import errors
+from framework.utils import views
 from framework.forms.form import Form
 from framework.core import app
 
@@ -66,6 +67,29 @@ class Controller(object):
         """What to do if the form is invalid."""
         self.request.session.flash('errors', self.form.errors)
         self.response.force_redirect_back()
+
+    def template(self, template, arguments):
+        """
+        Create a view with standard controller arguments.
+        Arguments include, flash data, alerts, old input, errors.
+        """
+        alerts = self._get_alerts()
+
+        print(alerts)
+
+        arguments['alerts'] = alerts
+        return views.view(template, arguments)
+
+    def _get_alerts(self):
+        alerts = {}
+        success = self.request.session.getFlash('alert-success')
+        if success:
+            alerts['success'] = success
+        danger = self.request.session.getFlash('alert-danger')
+        if danger:
+            alerts['danger'] = danger
+
+        return alerts
 
     def view(self):
         """

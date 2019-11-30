@@ -16,4 +16,4 @@ def direct_view(template_data, arguments={}):
 
 def __get_global_args(arguments):
     """Gets the global arguments to be passed to the view."""
-    return {**app.userapp.settings.GLOBAL_TEMPLATE_ARGS, **arguments}
+    return {**app.userapp.settings.globalTemplateArgs(), **arguments}

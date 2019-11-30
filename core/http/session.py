@@ -84,9 +84,19 @@ class Session(object):
         """Store a value for one request/response cycle."""
         Session.session[self.token]['flash'][key] = value
 
+    def getFlash(self, key):
+        """Get specific key from flash."""
+        try:
+            return self.flash_data()[key]
+        except KeyError:
+            return None
+
     def flash_data(self):
         """Get values only available for one request/response cycle."""
         return Session.session[self.token]['flash']
 
     def set_response_session_token(self, response, path="/", max_age=3600):
         response.set_cookie('session', self.token)
+
+    def __repr__(self):
+        return str(Session.session[self.token])

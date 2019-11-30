@@ -38,7 +38,7 @@ class WSGIApp(object):
                 except errors.DebugError as e:
                     if app.userapp.settings.DEBUG:
                         response.status = 500
-                        response.text = traceback.format_exc()
+                        response.text = e.message
                     else:
                         raise errors.HttpError(500, '')
         except errors.HttpError as e:
