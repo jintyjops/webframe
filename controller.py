@@ -68,14 +68,12 @@ class Controller(object):
         self.request.session.flash('errors', self.form.errors)
         self.response.force_redirect_back()
 
-    def template(self, template, arguments):
+    def template(self, template, arguments={}):
         """
         Create a view with standard controller arguments.
         Arguments include, flash data, alerts, old input, errors.
         """
         alerts = self._get_alerts()
-
-        print(alerts)
 
         arguments['alerts'] = alerts
         return views.view(template, arguments)
