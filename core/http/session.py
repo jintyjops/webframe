@@ -54,7 +54,10 @@ class Session(object):
             Session.session[self.token]
         except KeyError:
             self.token = self.__generate_new_session_token(Session.TOKEN_LENGTH)
-            Session.session[self.token] = {
+            self._set_fresh_session()
+
+    def _set_fresh_session(self):
+        Session.session[self.token] = {
                 'expiry': time.time() + Session.TOKEN_LIFE,
                 'flash': {},
                 'csrf': {}
@@ -71,7 +74,10 @@ class Session(object):
 
     def get(self, key):
         """Get a value from the current session."""
-        return Session.session[self.token][key]
+        try:
+            return Session.session[self.token][key]
+        except KeyError:
+            return None
 
     def store(self, key, value):
         """Store a value in the session."""
@@ -83,6 +89,12 @@ class Session(object):
             del Session.session[self.token][key]
         except KeyError:
             pass
+    
+    def destroy(self):
+        """Destroy the session completely."""
+        del Session.session[self.token]
+        # remake new session
+        self._set_fresh_session()
 
     def flash(self, key, value):
         """Store a value for one request/response cycle."""
