@@ -21,7 +21,7 @@ class Form(object):
         returns dictionary containing sanitized input.
         """
         sanitized = {}
-        for key, inp in _input.iteritems():
+        for key, inp in _input.items():
             key = html.escape(key).strip()
             inp = html.escape(inp).strip()
 

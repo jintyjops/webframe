@@ -76,23 +76,28 @@ class Controller(object):
         # Redirect to previous url
         self.response.force_redirect_back()
 
-    def template(self, template, arguments={}):
+    def template(self, template, arguments={}, tokens=0):
         """
         Create a view with standard controller arguments.
         Arguments include, flash data, alerts, old input, errors.
         """
+        arguments['_tokens'] = self.get_tokens(tokens)
         arguments['alerts'] = self._get_alerts()
         arguments['errors'] = self._get_errors()
         arguments['old'] = self._get_old_input()
         return views.view(template, arguments)
 
+    def get_tokens(self, num_tokens):
+        """Get a list of newly created and valid csrf tokens."""
+        return [self.request.session.new_csrf() for i in range(num_tokens)]
+
     def _get_alerts(self):
         """Return dict of alerts passed in session flash."""
         alerts = {}
-        success = self.request.session.getFlash('alert-success')
+        success = self.request.session.get_flash('alert-success')
         if success:
             alerts['success'] = success
-        danger = self.request.session.getFlash('alert-danger')
+        danger = self.request.session.get_flash('alert-danger')
         if danger:
             alerts['danger'] = danger
 
@@ -100,7 +105,7 @@ class Controller(object):
 
     def _get_errors(self):
         """Get errors from flash or return empty dict."""
-        errors = self.request.session.getFlash('errors')
+        errors = self.request.session.get_flash('errors')
         if errors is None:
             return {}
 
@@ -108,7 +113,7 @@ class Controller(object):
 
     def _get_old_input(self):
         """Get the old form input or return an empty dict."""
-        old = self.request.session.getFlash('old')
+        old = self.request.session.get_flash('old')
         if old is None:
             return {}
         
