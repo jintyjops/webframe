@@ -11,8 +11,8 @@ from framework.core import app
 
 class Controller(object):
 
-    # The form to use. Default form does nothing and expects nothing.
-    form = Form
+    # The form to use. Default to None.
+    form = None
     # defines if the subclass of this controller will handle validation.
     self_validating = False
 
@@ -34,9 +34,11 @@ class Controller(object):
 
         # Form handling
         self.form = self._form_setup()
-        if not self.__class__.self_validating and not self.form.validate():
-            self.form_invalid()
-        self.form.extract()
+
+        if self.form is not None:
+            if not self.__class__.self_validating and not self.form.validate():
+                self.form_invalid()
+            self.form.extract()
 
         # View handling
         return self.view()
@@ -59,13 +61,19 @@ class Controller(object):
         """
         For initialising and setting up a form.
         """
+        if not self.__class__.form:
+            return
         form = self.__class__.form()
         form.request = self.request
         return form
 
     def form_invalid(self):
         """What to do if the form is invalid."""
+        # Flash old input to session for later use.
+        self.request.session.flash('old', self.form.params)
+        # Flash Errors
         self.request.session.flash('errors', self.form.errors)
+        # Redirect to previous url
         self.response.force_redirect_back()
 
     def template(self, template, arguments={}):
@@ -73,12 +81,13 @@ class Controller(object):
         Create a view with standard controller arguments.
         Arguments include, flash data, alerts, old input, errors.
         """
-        alerts = self._get_alerts()
-
-        arguments['alerts'] = alerts
+        arguments['alerts'] = self._get_alerts()
+        arguments['errors'] = self._get_errors()
+        arguments['old'] = self._get_old_input()
         return views.view(template, arguments)
 
     def _get_alerts(self):
+        """Return dict of alerts passed in session flash."""
         alerts = {}
         success = self.request.session.getFlash('alert-success')
         if success:
@@ -88,6 +97,22 @@ class Controller(object):
             alerts['danger'] = danger
 
         return alerts
+
+    def _get_errors(self):
+        """Get errors from flash or return empty dict."""
+        errors = self.request.session.getFlash('errors')
+        if errors is None:
+            return {}
+
+        return errors            
+
+    def _get_old_input(self):
+        """Get the old form input or return an empty dict."""
+        old = self.request.session.getFlash('old')
+        if old is None:
+            return {}
+        
+        return old
 
     def view(self):
         """

@@ -25,11 +25,11 @@ class Request(webob.Request):
 
     def input(self, name):
         """Get input, attempts to get value from GET then POST."""
-        val = self.get(name)
-        if val is None:
-            val = self.post(name)
+        return self.params[name]
 
-        return val
+    def allInput(self):
+        """Get all input from POST and GET."""
+        return self.params
         
     def post(self, name):
         """Get POST data."""

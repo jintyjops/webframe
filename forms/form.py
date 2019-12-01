@@ -1,18 +1,41 @@
 """Base forms and form utilities."""
 
+import html
+
 class Form(object):
     """Base Form."""
 
     def __init__(self):
         """Setup attributes."""
         self.request = None
+        self.params = {}
         self.valid = False
         self.errors = {}
+
+    def sanitize(self, _input):
+        """
+        Sanitize input with default sanitization.
+        Can be extended, though make sure to call parent
+        if not extending complete functionality.
+
+        returns dictionary containing sanitized input.
+        """
+        sanitized = {}
+        for key, inp in _input.iteritems():
+            key = html.escape(key).strip()
+            inp = html.escape(inp).strip()
+
+            sanitized[key] = inp
+        
+        return sanitized
 
     def rules(self):
         return {}
 
     def validate(self):
+        # Sanitize first and set params from request
+        self.params = self.sanitize(self.request.allInput())
+
         # Get rules
         rules = self.rules()
         for name, validator_list in rules.items():
@@ -30,4 +53,7 @@ class Form(object):
 
     def input(self, name):
         """Helper method. Calls request.input(name)."""
-        return self.request.input(name)
+        try:
+            return self.params[name]
+        except KeyError:
+            return None

@@ -95,6 +95,10 @@ class Session(object):
         """Get values only available for one request/response cycle."""
         return Session.session[self.token]['flash']
 
+    def getNewCSRF(self):
+        """Generates and stores a new CSRF token."""
+        raise Exception('CSRF token generation not implemented!')
+
     def set_response_session_token(self, response, path="/", max_age=3600):
         response.set_cookie('session', self.token)
 
