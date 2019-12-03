@@ -8,7 +8,7 @@ import threading
 
 from framework.core import app
 
-# TODO lock file for entire request to avoid ovewriting data from another request.
+# XXX Race condition if with two requests to same session at once.
 class SessionFileStore:
     """Interface for interacting with session store."""
 
@@ -41,6 +41,10 @@ class SessionFileStore:
             self.lock.release()
 
         return sess
+
+    def fresh(self):
+        """Get fresh data from the session file."""
+        self.session = self._load_session()
 
     def commit(self):
         """Commit the current session to the store."""
@@ -99,7 +103,6 @@ class Session(object):
         session_dir = app.userapp.settings.STORAGE_DIR + '/sessions/'
 
         self._store = SessionFileStore(self.token, session_dir)
-
         self._create_if_not_exists()
         self._clear_flash()
 
@@ -126,11 +129,13 @@ class Session(object):
                 raise KeyError()
         except KeyError:
             self._store.session['flash'] = {}
+            pass
 
         self.delete('dont_clear_flash')
 
     def get(self, key):
         """Get a value from the current session."""
+        self._store.fresh()
         try:
             return self._store.session[key]
         except KeyError:
@@ -139,6 +144,7 @@ class Session(object):
     def store(self, key, value):
         """Store a value in the session."""
         self._store.session[key] = value
+        self.commit()
 
     def delete(self, key):
         """Delete a value from the session. Fails silently."""
@@ -146,6 +152,7 @@ class Session(object):
             del self._store.session[key]
         except KeyError:
             pass
+        self.commit()
     
     def destroy(self):
         """Destroy the session completely."""
@@ -156,6 +163,7 @@ class Session(object):
     def flash(self, key, value):
         """Store a value for one request/response cycle."""
         self._store.session['flash'][key] = value
+        self.commit()
 
     def get_flash(self, key):
         """Get specific key from flash."""
@@ -166,12 +174,15 @@ class Session(object):
 
     def flash_data(self):
         """Get values only available for one request/response cycle."""
+        self._store.fresh()
         return self._store.session['flash']
 
     def new_csrf(self):
         """Generates and stores a new CSRF token."""
+        self._store.fresh()
         token = str(secrets.token_hex(16))
         self._store.session['csrf'][token] = time.time() + Session.CSRF_LIFE
+        self.commit()
         return token
 
     def check_csrf(self, tokenToCheck):
