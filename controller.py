@@ -84,8 +84,7 @@ class Controller(object):
         model = self.__class__.model
         model_id = self.__class__.model_id
         if model is None or model_id is None:
-            return
-
+            return None
 
         record = model.find(self.request.url_param(model_id))
 
@@ -106,6 +105,7 @@ class Controller(object):
             return
         form = self.__class__.form()
         form.request = self.request
+        form.model = self.model
         return form
 
     def form_invalid(self):

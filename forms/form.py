@@ -7,6 +7,7 @@ class Form(object):
 
     def __init__(self):
         """Setup attributes."""
+        self.model = None
         self.request = None
         self.params = {}
         self.valid = False
