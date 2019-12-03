@@ -17,13 +17,11 @@ class Session(object):
     # dict of form {token: {key: value, etc...}, etc...}
     session = {}
 
-    # TODO handle expiry of tokens.
-
     def __init__(self, request):
         """Initialise session for this user."""
         self.request = request
         try:
-            # Check for key error.
+            # Check is Cookie actually exists
             self.request.headers['Cookie']
             cookies = self.request.cookies
         except KeyError:
@@ -32,12 +30,13 @@ class Session(object):
         try:
             self.token = cookies['session']
         except KeyError:
-            self.token = self.__generate_new_session_token(Session.TOKEN_LENGTH)
+            self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
 
-        self.__create_if_not_exists()
-        self.__clear_flash()
+        self._create_if_not_exists()
+        self._new_token_if_expired()
+        self._clear_flash()
 
-    def __generate_new_session_token(self, length):
+    def _generate_new_session_token(self, length):
         # Just in case ;)
         while True:
             token = b64encode(os.urandom(length))
@@ -48,13 +47,21 @@ class Session(object):
 
         return str(token)
 
-    def __create_if_not_exists(self):
+    def _create_if_not_exists(self):
         """Try to get or create then return a session with the current token."""
         try:
             Session.session[self.token]
         except KeyError:
-            self.token = self.__generate_new_session_token(Session.TOKEN_LENGTH)
+            self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
             self._set_fresh_session()
+
+    def _new_token_if_expired(self):
+        """Create a new token if the current one is expired."""
+        sess = Session.session[self.token]
+        if sess['expiry'] < time.time():
+            self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
+            sess['expiry'] = time.time() + Session.TOKEN_LIFE
+            Session.session[self.token] = sess
 
     def _set_fresh_session(self):
         Session.session[self.token] = {
@@ -63,7 +70,7 @@ class Session(object):
                 'csrf': {}
             }
 
-    def __clear_flash(self):
+    def _clear_flash(self):
         try:
             if not self.get('dont_clear_flash'):
                 raise KeyError()

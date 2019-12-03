@@ -1,4 +1,8 @@
-"""Development server started."""
+"""
+Development server.
+
+DO NOT USE IN PRODUCTION!
+"""
 
 # ALL YE WHO ENTER TREMBLE IN FEAR. HERE BE DRAGONS.
 
