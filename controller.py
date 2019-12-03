@@ -14,6 +14,9 @@ class Controller(object):
 
     # The form to use. Default to None.
     form = None
+    # The model to fetch from the REST params in the url.
+    model = None
+    model_id = None
     # defines if the subclass of this controller will handle validation.
     self_validating = False
 
@@ -32,6 +35,8 @@ class Controller(object):
 
         # Middleware
         self.__run_middleware()
+
+        self.model = self._get_model_or_404()
 
         # Form handling
         self.form = self._form_setup()
@@ -57,6 +62,29 @@ class Controller(object):
 
         for mware in middleware:
             mware(self.request, self.response)
+
+    def _get_model_or_404(self):
+        """
+        Returns the model if model and model_id are set.
+        Throws 404 not found if model cannot be found.
+        Assigns the fetched model to model_name or the lowercase name of model.
+        """
+        model = self.__class__.model
+        model_id = self.__class__.model_id
+        if model is None or model_id is None:
+            return
+
+
+        record = model.find(self.request.url_param(model_id))
+
+        if record is None:
+            errors.abort(
+                404,
+                'Unable to find record.'
+            )
+
+        return record
+
 
     def _form_setup(self):
         """

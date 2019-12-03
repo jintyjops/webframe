@@ -28,6 +28,11 @@ class Model():
         self.stage()
         app.db.commit()
 
+    def delete(self):
+        """Delete the model from the database."""
+        app.db.delete(self)
+        app.db.commit()
+
     @classmethod
     def query(cls):
         """Create a new session query object for implementing class."""
