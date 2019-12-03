@@ -6,6 +6,7 @@ charge of returning a string.
 """
 from framework.utils import errors
 from framework.utils import views
+from framework.utils.auth import auth
 from framework.forms.form import Form
 from framework.core import app
 
@@ -85,6 +86,11 @@ class Controller(object):
         arguments['alerts'] = self._get_alerts()
         arguments['errors'] = self._get_errors()
         arguments['old'] = self._get_old_input()
+        #  Only add authuser if it does not exist.
+        try:
+            arguments['authuser']
+        except KeyError:
+            arguments['authuser'] = auth(self.request).user()
         return views.view(template, arguments)
 
     def get_tokens(self, num_tokens):

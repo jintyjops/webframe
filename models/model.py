@@ -28,6 +28,16 @@ class Model():
         self.stage()
         app.db.commit()
 
+    @classmethod
+    def query(cls):
+        """Create a new session query object for implementing class."""
+        return app.db.query(cls)
+
+    @classmethod
+    def find(cls, pk):
+        """Find by primary key."""
+        return cls.query().get(pk)
+
     @staticmethod
     def save_all():
         """Commit all staged changes to the database."""
