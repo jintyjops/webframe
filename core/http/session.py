@@ -3,19 +3,83 @@ import os
 from base64 import b64encode
 import time
 import secrets
+import json
+import threading
+
+from framework.core import app
+
+# TODO lock file for entire request to avoid ovewriting data from another request.
+class SessionFileStore:
+    """Interface for interacting with session store."""
+
+    def __init__(self, token, session_dir):
+        """Load the session."""
+        # Lock for this token.
+        self.lock = threading.Lock()
+        self.token = token
+        self.session_dir = session_dir
+
+        self._create_session_dir_if_not_exists()
+        self.session = self._load_session()
+
+    def _create_session_dir_if_not_exists(self):
+        """Create the session directory if it does not exist."""
+        if not os.path.exists(self.session_dir) or not os.path.isdir(self.session_dir):
+            os.mkdir(self.session_dir)
+
+    def _load_session(self):
+        """Load the entire session and decode to dict."""
+        sess = {}
+
+        self.lock.acquire()
+        try:
+            with open(self.session_dir + self.token, 'r') as f:
+                sess = json.loads(f.read())
+        except (IOError, json.decoder.JSONDecodeError):
+            pass
+        finally:
+            self.lock.release()
+
+        return sess
+
+    def commit(self):
+        """Commit the current session to the store."""
+        self.lock.acquire()
+        try:
+            with open(self.session_dir + self.token, 'w') as f:
+                f.write(json.dumps(self.session))
+            return True
+        except IOError:
+            return False
+        finally:
+            self.lock.release()
+
+    def exists(self):
+        """True if session file exists."""
+        return os.path.exists(self.session_dir + self.token)
+
+    def set_new_token(self, token):
+        """Sets new token, deletes old token."""
+        # Delete old session file.
+        self.lock.acquire()
+        try:
+            os.remove(self.session_dir + self.token)
+        except IOError:
+            pass
+        finally:
+            self.lock.release()
+
+        # Set new session file.
+        self.token = token
+        self.commit()
+
 
 class Session(object):
 
     # 32 characters should be enough.
     TOKEN_LENGTH = 32
-    # In seconds
-    TOKEN_LIFE = 300
     # In seconds (86400 seconds == one day)
     CSRF_LIFE = 86400
-
-    # in memory session handler.
-    # dict of form {token: {key: value, etc...}, etc...}
-    session = {}
 
     def __init__(self, request):
         """Initialise session for this user."""
@@ -32,80 +96,66 @@ class Session(object):
         except KeyError:
             self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
 
+        session_dir = app.userapp.settings.STORAGE_DIR + '/sessions/'
+
+        self._store = SessionFileStore(self.token, session_dir)
+
         self._create_if_not_exists()
-        self._new_token_if_expired()
         self._clear_flash()
 
     def _generate_new_session_token(self, length):
-        # Just in case ;)
-        while True:
-            token = b64encode(os.urandom(length))
-            try:
-                Session.session[token]
-            except KeyError:
-                break
-
-        return str(token)
+        """Returns a new session token."""
+        return str(secrets.token_hex(16))
 
     def _create_if_not_exists(self):
         """Try to get or create then return a session with the current token."""
-        try:
-            Session.session[self.token]
-        except KeyError:
-            self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
+        if not self._store.exists():
             self._set_fresh_session()
-
-    def _new_token_if_expired(self):
-        """Create a new token if the current one is expired."""
-        sess = Session.session[self.token]
-        if sess['expiry'] < time.time():
             self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
-            sess['expiry'] = time.time() + Session.TOKEN_LIFE
-            Session.session[self.token] = sess
+            self._store.set_new_token(self.token)
 
     def _set_fresh_session(self):
-        Session.session[self.token] = {
-                'expiry': time.time() + Session.TOKEN_LIFE,
-                'flash': {},
-                'csrf': {}
-            }
+        self._store.session = {
+            'flash': {},
+            'csrf': {}
+        }
 
     def _clear_flash(self):
         try:
             if not self.get('dont_clear_flash'):
                 raise KeyError()
         except KeyError:
-            Session.session[self.token]['flash'] = {}
+            self._store.session['flash'] = {}
 
         self.delete('dont_clear_flash')
 
     def get(self, key):
         """Get a value from the current session."""
         try:
-            return Session.session[self.token][key]
+            return self._store.session[key]
         except KeyError:
             return None
 
     def store(self, key, value):
         """Store a value in the session."""
-        Session.session[self.token][key] = value
+        self._store.session[key] = value
 
     def delete(self, key):
         """Delete a value from the session. Fails silently."""
         try:
-            del Session.session[self.token][key]
+            del self._store.session[key]
         except KeyError:
             pass
     
     def destroy(self):
         """Destroy the session completely."""
-        del Session.session[self.token]
-        # remake new session
         self._set_fresh_session()
+        self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
+        self._store.set_new_token(self.token)
 
     def flash(self, key, value):
         """Store a value for one request/response cycle."""
-        Session.session[self.token]['flash'][key] = value
+        self._store.session['flash'][key] = value
 
     def get_flash(self, key):
         """Get specific key from flash."""
@@ -116,19 +166,19 @@ class Session(object):
 
     def flash_data(self):
         """Get values only available for one request/response cycle."""
-        return Session.session[self.token]['flash']
+        return self._store.session['flash']
 
     def new_csrf(self):
         """Generates and stores a new CSRF token."""
-        token = secrets.token_urlsafe(32)
-        Session.session[self.token]['csrf'][token] = time.time() + Session.CSRF_LIFE
+        token = str(secrets.token_hex(16))
+        self._store.session['csrf'][token] = time.time() + Session.CSRF_LIFE
         return token
 
     def check_csrf(self, tokenToCheck):
         """Check CSRF token on this session."""
         self._remove_old_csrf_tokens()
         try:
-            Session.session[self.token]['csrf'][tokenToCheck]
+            self._store.session['csrf'][tokenToCheck]
             # TODO determine if csrf token should be invalidated here.
             return True
         except KeyError:
@@ -136,14 +186,22 @@ class Session(object):
 
     def _remove_old_csrf_tokens(self):
         """Remove all old csrf tokens for this session."""
-        Session.session[self.token]['csrf'] = dict([
+        self._store.session['csrf'] = dict([
             (token, life)
-            for token, life in Session.session[self.token]['csrf'].items()
+            for token, life in self._store.session['csrf'].items()
             if time.time() < life
         ])
 
     def set_response_session_token(self, response, path="/", max_age=3600):
         response.set_cookie('session', self.token)
 
+    def commit(self):
+        """
+        Commit the current session data.
+        This is a wrapper method around the commit method of the 
+        chosen session store.
+        """
+        self._store.commit()
+
     def __repr__(self):
-        return str(Session.session[self.token])
+        return str(self._store.session)

@@ -47,7 +47,10 @@ class Controller(object):
             self.form.extract()
 
         # View handling
-        return self.view()
+        try:
+            return self.view()
+        finally:
+            self._run_middleware_after()
 
     def __run_middleware(self):
         """
@@ -59,6 +62,15 @@ class Controller(object):
         # Global middleware takes priority.
         middleware = app.userapp.settings.GLOBAL_MIDDLEWARE +\
                      self.request.route.middleware
+
+        for mware in middleware:
+            mware(self.request, self.response)
+
+    def _run_middleware_after(self):
+        """
+        Similar to __run_middleware(), except it is just global middleware.
+        """
+        middleware = app.userapp.settings.GLOBAL_AFTER_MIDDLEWARE
 
         for mware in middleware:
             mware(self.request, self.response)

@@ -22,3 +22,11 @@ def check_csrf_on_post(request, response):
         token = request.post('_token')
         if not request.session.check_csrf(token):
             errors.abort(401, 'Invalid form request.')
+
+def session_commit(request, response):
+    """
+    Commit the session at the end of the request.
+    This is designed to be run at GLOBAL_AFTER_MIDDLEWARE.
+    """
+    request.session.commit()
+
