@@ -8,11 +8,15 @@ DO NOT USE IN PRODUCTION!
 
 from threading import Thread
 import sys
-from importlib import reload
+import subprocess
+import os
+import signal
+import __main__
 import traceback
 import time
 import checksumdir
 import waitress
+import logging
 import framework.core.wsgi as wsgi
 import framework.core.app as frameworkapp
 import framework.models.model as model
@@ -26,81 +30,46 @@ class DevApp(object):
         self.server_thread = None
         self.old_module_val = None
 
-        self.firstRun = True
-
         try:
-            self.__make_server()
-            self.__check_shutdown()
-        except KeyboardInterrupt:
-            if self.server_thread:
-                self.server_thread.close()
+            if sys.argv[1] == 'run-once':
+                self._run_server()
+        except IndexError:
+            self._dev_thread()
 
-    def __check_shutdown(self):
-        # This saves the current directory.
-        self.__has_changed(self.app.__file__ + '/../')
+    def _dev_thread(self):
+        """The main thread which runs the server."""
         while True:
             time.sleep(0.1)
 
-            if self.__has_changed(self.app.__file__ + '/../') or self.server_thread.failed:
-                self.server_thread.close()
+            hasChanged = self._has_changed(self.app.__file__ + '/../')
+            hasDied = self.server_thread is not None and self.server_thread.poll() is not None
+            
+            if hasChanged or hasDied:
                 try:
-                    model.Model._remake_base()
-                    self.__make_server()
-                except Exception:
-                    print(traceback.format_exc())
-                    self.server_thread.failed = False
+                    # SIGHUP is the signal to kill waitress.
+                    # See https://github.com/Pylons/waitress/pull/48 
+                    os.kill(self.server_thread.pid, signal.SIGHUP)
+                except AttributeError:
+                    pass
+                self.server_thread = self._make_new_server_thread()
 
+    def _make_new_server_thread(self):
+        """Creates a new subprocess of server thread."""
+        cmd = sys.executable + ' ' + os.path.abspath(__main__.__file__) + ' run-once'
+        return subprocess.Popen(cmd, shell=True)
 
-    def __has_changed(self, path):
+    def _run_server(self):
+        print('starting new server...')
+        wsgiapp = wsgi.WSGIApp(self.app)
+        domain = self.app.settings.HOST
+        if self.app.settings.PORT:
+            domain += ':' + str(self.app.settings.PORT)
+        logging.getLogger('waitress').setLevel(logging.ERROR)
+        waitress.serve(wsgiapp, listen=domain)
+
+    def _has_changed(self, path):
         new_val = checksumdir.dirhash(path)
         if new_val != self.old_module_val:
             self.old_module_val = new_val
             return True
         return False
-
-    def __make_server(self):
-        # start server
-        if not self.firstRun:
-            self.__reload_app(self.app)
-        wsgiapp = wsgi.WSGIApp(self.app)
-        self.server_thread = DevServerThread(
-            self.app.settings,
-            wsgiapp
-        )
-        # Don't let server thread continue if main thread goes down.
-        self.server_thread.daemon = True
-        # print('starting new server...')
-        self.server_thread.start()
-        self.firstRun = False
-
-    def __reload_app(self, userapp):
-        """Reload the app."""
-        # This is hacky and horrible.
-        for module in sys.modules:
-            if module.split('.')[0] == userapp.__name__:
-                reload(sys.modules.get(module))
-        reload(frameworkapp)
-
-
-class DevServerThread(Thread):
-
-    def __init__(self, settings, wsgiapp):
-        Thread.__init__(self)
-        self.settings = settings
-        self.wsgiapp = wsgiapp
-        self.server = None
-        self.failed = False
-
-    def run(self):
-        domain = self.settings.HOST
-        if self.settings.PORT:
-            domain += ':' + str(self.settings.PORT)
-        try:
-            self.server = waitress.server.create_server(self.wsgiapp, listen=domain, channel_timeout=1)
-            self.server.run()
-        except:
-            print('server failed, retrying...')
-            self.failed = True
-
-    def close(self):
-        self.server.close()
