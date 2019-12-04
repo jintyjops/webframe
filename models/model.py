@@ -5,6 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String
 from framework.core import app
+from framework.utils.errors import abort
 
 class Model():
     """Functionality for models."""
@@ -42,6 +43,16 @@ class Model():
     def find(cls, pk):
         """Find by primary key."""
         return cls.query().get(pk)
+
+    @classmethod
+    def findOrFail(cls, pk):
+        """Find model by primary key or throw 404."""
+        if pk is None:
+            abort(404, 'Unable to find record.')
+        model = cls.find(pk)
+        if model is None:
+            abort(404, 'Unable to find record.')
+        return model
 
     @staticmethod
     def save_all():
