@@ -54,6 +54,7 @@ class DevApp(object):
                 except AttributeError:
                     pass
                 self.server_thread = self._make_new_server_thread()
+                time.sleep(2)
 
     def _make_new_server_thread(self):
         """Creates a new subprocess of server thread."""
@@ -71,7 +72,7 @@ class DevApp(object):
         if self.app.settings.PORT:
             port = self.app.settings.PORT
 
-        print('Serving on: ' + f'{host}:{port}')
+        # print('Serving on: ' + f'{host}:{port}')
 
         server = wsgiserver.WSGIServer(self.app.wsgi.app, host=host, port=port)
         server.start()

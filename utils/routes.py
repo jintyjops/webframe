@@ -16,7 +16,7 @@ def url(name, args={}):
         
 
     if url is None:
-        abort(500, 'Could not find route...')
+        abort(500, 'Could not find route: ' + str(name))
 
     return url
 
