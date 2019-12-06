@@ -20,6 +20,7 @@ import logging
 import framework.core.wsgi as wsgi
 import framework.core.app as frameworkapp
 import framework.models.model as model
+import wsgiserver
 
 
 class DevApp(object):
@@ -48,7 +49,8 @@ class DevApp(object):
                 try:
                     # SIGHUP is the signal to kill waitress.
                     # See https://github.com/Pylons/waitress/pull/48 
-                    os.kill(self.server_thread.pid, signal.SIGHUP)
+                    # os.kill(self.server_thread.pid, signal.SIGINT)
+                    self.server_thread.kill()
                 except AttributeError:
                     pass
                 self.server_thread = self._make_new_server_thread()
@@ -56,16 +58,24 @@ class DevApp(object):
     def _make_new_server_thread(self):
         """Creates a new subprocess of server thread."""
         cmd = sys.executable + ' ' + os.path.abspath(__main__.__file__) + ' run-once'
-        return subprocess.Popen(cmd, shell=True)
+        return subprocess.Popen(cmd)
 
     def _run_server(self):
-        print('starting new server...')
-        wsgiapp = wsgi.WSGIApp(self.app)
-        domain = self.app.settings.HOST
+        # wsgiapp = wsgi.WSGIApp(self.app)
+        # logging.getLogger('waitress').setLevel(logging.ERROR)
+        # # waitress.serve(wsgiapp, listen=domain)
+        # self.server = waitress.server.create_server(wsgiapp, listen=domain, channel_timeout=1)
+        # self.server.run()
+        host = self.app.settings.HOST
+        port = 8000
         if self.app.settings.PORT:
-            domain += ':' + str(self.app.settings.PORT)
-        logging.getLogger('waitress').setLevel(logging.ERROR)
-        waitress.serve(wsgiapp, listen=domain)
+            port = self.app.settings.PORT
+
+        print('Serving on: ' + f'{host}:{port}')
+
+        server = wsgiserver.WSGIServer(self.app.wsgi.app, host=host, port=port)
+        server.start()
+        
 
     def _has_changed(self, path):
         new_val = checksumdir.dirhash(path)
