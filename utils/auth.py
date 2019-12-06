@@ -14,8 +14,14 @@ class Auth():
         self.request = request
         self.usermodel = usermodel
 
-    def authorize(self, email, password):
-        """Authorize the user with the given email/password."""
+    def authorize(self, email, password, custom_check=None):
+        """
+        Authorize the user with the given email/password.
+
+        Calls custom check with the fetched user argument if the email 
+        and password are correct.
+        If custom check returns False then authorisation fails.
+        """
 
         user = self.usermodel.query().filter_by(email=email).first()
 
@@ -24,11 +30,14 @@ class Auth():
 
         if not bcrypt.checkpw(password.encode('UTF-8'), user.password.encode('UTF-8')):
             return False
+
+        if not custom_check(user):
+            return False
         
         # User is authorized store the users id.
         self.request.session.store('_auth', user.id)
 
-        return True
+        return user
 
     def deauth(self):
         """Destroy the current session."""
