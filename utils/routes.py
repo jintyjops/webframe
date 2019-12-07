@@ -4,7 +4,7 @@ import parse
 from framework.core import app
 from framework.utils.errors import abort
 
-def url(name, args={}):
+def url(name, args={}, get={}):
     """Reverse the route in the routes file"""
     routes = app.userapp.routes.route.routes
 
@@ -12,11 +12,18 @@ def url(name, args={}):
 
     for route_params in routes:
         if __match_route(name, route_params):
-           url = __generate_url(route_params, args)
-        
+            url = __generate_url(route_params, args)
 
     if url is None:
         abort(500, 'Could not find route: ' + str(name))
+
+    get_string = '&'.join([
+        str(key) + '=' + str(val)
+        for key, val in get.items()
+    ])
+
+    if get_string:
+        url += '?' + get_string
 
     return url
 

@@ -133,6 +133,16 @@ class Controller(object):
             arguments['authuser'] = auth(self.request).user()
         return views.view(template, arguments)
 
+    def old(self, name):
+        """Utility method to look in flash['old'] without throwing ke error."""
+        try:
+            old = self.request.session.get_flash('old')
+            if old is None:
+                return None
+            return old[name]
+        except KeyError:
+            return None
+
     def get_tokens(self, num_tokens):
         """Get a list of newly created and valid csrf tokens."""
         return [self.request.session.new_csrf() for i in range(num_tokens)]
