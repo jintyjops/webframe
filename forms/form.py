@@ -52,9 +52,23 @@ class Form(object):
         """Extract the values from the form."""
         pass
 
-    def input(self, name):
-        """Helper method. Calls request.input(name)."""
+    def has(self, name):
+        """Check if the form has an input."""
         try:
-            return self.params[name]
+            _input = self.params[name]
+            if _input is None or _input.strip() == '':
+                return False
+        except KeyError:
+            return False
+
+        return True
+
+    def input(self, name):
+        """
+        Helper method to get the input.
+        Returns None if the input is blank.
+        """
+        try:
+            return self.params[name].strip()
         except KeyError:
             return None

@@ -33,7 +33,7 @@ class required(Validator):
 
     def validate(self, name, form):
         _input = form.input(name)
-        if _input is None or len(_input) == 0:
+        if not form.has(name) or len(_input) == 0:
             return 'The ' + name + ' field is required.'
 
 class max_len(Validator):
@@ -44,7 +44,7 @@ class max_len(Validator):
     
     def validate(self, name, form):
         _input = form.input(name)
-        if _input is None:
+        if not form.has(name):
             return
         if len(_input) > self.length:
             return 'The ' + name + ' field is too long.'
@@ -57,7 +57,7 @@ class min_len(Validator):
     
     def validate(self, name, form):
         _input = form.input(name)
-        if _input is None:
+        if not form.has(name):
             return
         if len(_input) < self.length:
             return 'The ' + name + ' field is too short.'
@@ -67,7 +67,7 @@ class email(Validator):
 
     def validate(self, name, form):
         _input = form.input(name)
-        if _input is None:
+        if not form.has(name):
             return
         if not bool(RFC_EMAIL_REGEX.fullmatch(_input)):
             return 'The ' + name + ' field must be an email.'
@@ -88,6 +88,10 @@ class unique(Validator):
 
     def validate(self, name, form):
         _input = form.input(name)
+
+        if not form.has(name):
+            return
+
         count = self.model.query() \
             .filter_by(**{self.column: _input}) \
             .filter(self.model.id.notin_(self.exclude)) \
@@ -95,4 +99,15 @@ class unique(Validator):
 
         if count > 0:
             return 'A record already exists with this ' + name + '.'
-        
+
+class integer(Validator):
+    """Returns error if input is not in email format."""
+
+    def validate(self, name, form):
+        _input = form.input(name)
+        if not form.has(name):
+            return
+        try:
+            int(_input)
+        except ValueError:
+            return 'The ' + name + ' field must be an integer.'
