@@ -29,6 +29,8 @@ class Model():
         self.stage()
         app.db.commit()
 
+        return self
+
     def delete(self):
         """Delete the model from the database."""
         app.db.delete(self)

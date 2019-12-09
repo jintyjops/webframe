@@ -111,3 +111,26 @@ class integer(Validator):
             int(_input)
         except ValueError:
             return 'The ' + name + ' field must be an integer.'
+
+class exists(Validator):
+    """Checks if given id on model exists in the database.."""
+
+    def __init__(self, model, message=None):
+        """
+        model: the model to query on
+        column: the column on the model to check
+        exlude: ids to exclude
+        """
+        Validator.__init__(self, message)
+        self.model = model
+
+    def validate(self, name, form):
+        _input = form.input(name)
+
+        if not form.has(name):
+            return
+
+        model = self.model.find(_input)
+
+        if model is None:
+            return 'Invalid record.'
