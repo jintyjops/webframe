@@ -69,6 +69,9 @@ class Form(object):
         Returns None if the input is blank.
         """
         try:
-            return self.params[name].strip()
+            _input = self.params[name].strip()
+            if _input == '':
+                return None
+            return _input
         except KeyError:
             return None
