@@ -7,4 +7,4 @@ def store_last_route(request, response):
     except KeyError:
         last_route = ''
     request.session.store('last_route', last_route)
-    request.session.store('this_route', request.path)
+    request.session.store('this_route', request.path_qs)

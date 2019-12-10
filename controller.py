@@ -32,11 +32,12 @@ class Controller(object):
         self.response = response
 
         # Order of operations for controller
+        
+        self.request.model = self._get_model_or_404()
 
         # Middleware
         self.__run_middleware()
 
-        self.request.model = self._get_model_or_404()
 
         # Form handling
         self.form = self._form_setup()
