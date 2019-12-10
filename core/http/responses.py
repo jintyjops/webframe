@@ -9,6 +9,7 @@ class Response(webob.Response):
     def __init__(self, request):
         webob.Response.__init__(self)
         self.request = request
+        self.template_args = {}
 
     def redirect(self, location):
         """Redirect to specific location."""

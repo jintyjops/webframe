@@ -121,6 +121,8 @@ class Controller(object):
         Create a view with standard controller arguments.
         Arguments include, flash data, alerts, old input, errors.
         """
+        # Add arguments from response. (these are often set in middleware).
+        arguments = {**self.response.template_args, **arguments}
         arguments['_tokens'] = self.get_tokens(tokens)
         arguments['alerts'] = self._get_alerts()
         arguments['errors'] = self._get_errors()

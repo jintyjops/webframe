@@ -10,6 +10,7 @@ class Request(webob.Request):
         webob.Request.__init__(self, environ)
         self.route = None
         self.session = None
+        self.model = None
 
     def set_route(self, route):
         """
