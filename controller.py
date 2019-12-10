@@ -36,7 +36,7 @@ class Controller(object):
         # Middleware
         self.__run_middleware()
 
-        self.model = self._get_model_or_404()
+        self.request.model = self._get_model_or_404()
 
         # Form handling
         self.form = self._form_setup()
@@ -105,7 +105,6 @@ class Controller(object):
             return
         form = self.__class__.form()
         form.request = self.request
-        form.model = self.model
         return form
 
     def form_invalid(self):
