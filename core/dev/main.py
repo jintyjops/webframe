@@ -26,13 +26,15 @@ import wsgiserver
 class DevApp(object):
     """Development server and application."""
 
-    def __init__(self, app):
+    def __init__(self, app, runtime=None):
         self.app = app
         self.server_thread = None
         self.old_module_val = None
 
         try:
             if sys.argv[1] == 'run-once':
+                if runtime is not None:
+                    runtime()
                 self._run_server()
         except IndexError:
             self._dev_thread()
