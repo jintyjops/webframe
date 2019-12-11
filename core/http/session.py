@@ -108,7 +108,7 @@ class Session(object):
 
     def _generate_new_session_token(self, length):
         """Returns a new session token."""
-        return str(secrets.token_hex(16))
+        return str(secrets.token_hex(32))
 
     def _create_if_not_exists(self):
         """Try to get or create then return a session with the current token."""
@@ -120,7 +120,7 @@ class Session(object):
     def _set_fresh_session(self):
         self._store.session = {
             'flash': {},
-            'csrf': {}
+            'csrf': None
         }
 
     def _clear_flash(self):
@@ -177,31 +177,32 @@ class Session(object):
         self._store.fresh()
         return self._store.session['flash']
 
-    def new_csrf(self):
-        """Generates and stores a new CSRF token."""
+    def csrf_token(self):
+        """
+        Generates or gets/stores the CSRF token.
+        Returns the CSRF token for the session.
+        """
         self._store.fresh()
-        token = str(secrets.token_hex(16))
-        self._store.session['csrf'][token] = time.time() + Session.CSRF_LIFE
-        self.commit()
+        token = None
+        try:
+            token = self._store.session['csrf']
+            if token == '' or token is None:
+                raise KeyError
+        except KeyError:
+            token = str(secrets.token_hex(32))
+            self._store.session['csrf'] = token
+            self.commit()
         return token
 
     def check_csrf(self, tokenToCheck):
         """Check CSRF token on this session."""
-        self._remove_old_csrf_tokens()
         try:
-            self._store.session['csrf'][tokenToCheck]
-            # TODO determine if csrf token should be invalidated here.
+            token = self._store.session['csrf']
+            if tokenToCheck != token:
+                raise KeyError
             return True
         except KeyError:
             return False
-
-    def _remove_old_csrf_tokens(self):
-        """Remove all old csrf tokens for this session."""
-        self._store.session['csrf'] = dict([
-            (token, life)
-            for token, life in self._store.session['csrf'].items()
-            if time.time() < life
-        ])
 
     def set_response_session_token(self, response, path="/", max_age=3600):
         response.set_cookie('session', self.token)

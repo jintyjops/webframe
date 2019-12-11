@@ -117,14 +117,14 @@ class Controller(object):
         # Redirect to previous url
         self.response.force_redirect_back()
 
-    def template(self, template, arguments={}, tokens=0):
+    def template(self, template, arguments={}):
         """
         Create a view with standard controller arguments.
         Arguments include, flash data, alerts, old input, errors.
         """
         # Add arguments from response. (these are often set in middleware).
         arguments = {**self.response.template_args, **arguments}
-        arguments['_tokens'] = self.get_tokens(tokens)
+        arguments['_token'] = self.request.session.csrf_token()
         arguments['alerts'] = self._get_alerts()
         arguments['errors'] = self._get_errors()
         arguments['old'] = self._get_old_input()
@@ -144,10 +144,6 @@ class Controller(object):
             return old[name]
         except KeyError:
             return None
-
-    def get_tokens(self, num_tokens):
-        """Get a list of newly created and valid csrf tokens."""
-        return [self.request.session.new_csrf() for i in range(num_tokens)]
 
     def _get_alerts(self):
         """Return dict of alerts passed in session flash."""
