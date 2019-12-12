@@ -17,9 +17,14 @@ def set_session_token_on_response(request, response):
     request.session.set_response_session_token(response)
 
 def check_csrf_on_post(request, response):
-    """Check the existence or validity of a csrf token in on post."""
+    """
+    Check the existence or validity of a csrf token in on post.
+    Checks request.json if content type is application/json
+    """
     if request.method.upper() == 'POST':
         token = request.post('_token')
+        if token is None and request.content_type == 'application/json':
+            token = request.get_json('_token')
         if not request.session.check_csrf(token):
             errors.abort(401, 'Invalid form request.')
 

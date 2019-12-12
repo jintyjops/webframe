@@ -29,8 +29,11 @@ class Request(webob.Request):
         return self.params[name]
 
     def allInput(self):
-        """Get all input from POST and GET."""
-        return self.params
+        """Get all input from POST, GET, and json."""
+        params = self.params
+        if self.content_type == 'application/json' and self.json is not None:
+            params = {**params, **self.json}
+        return params
         
     def post(self, name):
         """Get POST data."""
@@ -43,6 +46,13 @@ class Request(webob.Request):
         """Get GET data."""
         try:
             return self.GET[name]
+        except KeyError:
+            return None
+    
+    def get_json(self, name):
+        """Get json data."""
+        try:
+            return self.json[name]
         except KeyError:
             return None
 

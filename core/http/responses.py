@@ -1,6 +1,7 @@
 """Wrapper class for webob response to add functionality in future."""
 
 import webob
+import json
 from framework.utils.errors import HttpError
 
 
@@ -40,3 +41,8 @@ class Response(webob.Response):
 
     def set_content_type(self, content_type):
         self.content_type = content_type
+
+    def json(self, jsonData):
+        """Generates json as body of request."""
+        self.set_content_type('application/json')
+        return json.dumps(jsonData)

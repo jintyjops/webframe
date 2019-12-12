@@ -32,18 +32,16 @@ class Controller(object):
         self.response = response
 
         # Order of operations for controller
-        
         self.request.model = self._get_model_or_404()
 
         # Middleware
         self.__run_middleware()
 
-
         # Form handling
         self.form = self._form_setup()
 
-        if self.form is not None:
-            if not self.__class__.self_validating and not self.form.validate():
+        if self.form is not None and not self.__class__.self_validating:
+            if not self.form.validate():
                 self.form_invalid()
             self.form.extract()
 
