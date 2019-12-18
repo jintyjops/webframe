@@ -22,8 +22,14 @@ class Form(object):
         """
         sanitized = {}
         for key, inp in _input.items():
-            key = html.escape(key).strip()
-            inp = html.escape(inp).strip()
+            try:
+                key = html.escape(key).strip()
+            except AttributeError:
+                pass
+            try:
+                inp = html.escape(inp).strip()
+            except AttributeError:
+                pass
 
             sanitized[key] = inp
         
@@ -54,8 +60,7 @@ class Form(object):
     def has(self, name):
         """Check if the form has an input."""
         try:
-            _input = self.params[name]
-            if _input is None or _input.strip() == '':
+            if self.input(name) is None:
                 return False
         except KeyError:
             return False
@@ -68,7 +73,11 @@ class Form(object):
         Returns None if the input is blank.
         """
         try:
-            _input = self.params[name].strip()
+            _input = self.params[name]
+            try:
+                _input = _input.strip()
+            except AttributeError:
+                pass
             if _input == '':
                 return None
             return _input

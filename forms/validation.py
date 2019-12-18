@@ -33,7 +33,7 @@ class required(Validator):
 
     def validate(self, name, form):
         _input = form.input(name)
-        if not form.has(name) or len(_input) == 0:
+        if not form.has(name):
             return 'The ' + name + ' field is required.'
 
 class max_len(Validator):
