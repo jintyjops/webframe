@@ -36,7 +36,7 @@ def true(condition):
 
 @_assertion
 def false(condition):
-    if not condition:
+    if condition:
         raise AssertionError('Failed asserting ' + str(condition) + ' is false.')
 
 @_assertion

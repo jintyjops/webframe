@@ -68,7 +68,7 @@ class Tester:
                     self.print_status('R')
                     self.risky_tests[testfunc] = 'No assertions found in test.'
                 else:
-                    self.print_status('*')
+                    self.print_status('.')
             except AssertionError as e:
                 self.assertion_errors[testfunc] = e
                 self.print_status('F'),

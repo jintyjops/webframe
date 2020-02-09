@@ -71,6 +71,8 @@ class Form(object):
         """
         Helper method to get the input.
         Returns None if the input is blank.
+
+        Only works after validation has been called (or during validation).
         """
         try:
             _input = self.params[name]
