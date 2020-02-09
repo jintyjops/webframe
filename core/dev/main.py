@@ -15,7 +15,6 @@ import __main__
 import traceback
 import time
 import checksumdir
-import waitress
 import logging
 import framework.core.wsgi as wsgi
 import framework.core.app as frameworkapp
@@ -49,9 +48,6 @@ class DevApp(object):
             
             if hasChanged or hasDied:
                 try:
-                    # SIGHUP is the signal to kill waitress.
-                    # See https://github.com/Pylons/waitress/pull/48 
-                    # os.kill(self.server_thread.pid, signal.SIGINT)
                     self.server_thread.kill()
                 except AttributeError:
                     pass
@@ -64,11 +60,6 @@ class DevApp(object):
         return subprocess.Popen(cmd)
 
     def _run_server(self):
-        # wsgiapp = wsgi.WSGIApp(self.app)
-        # logging.getLogger('waitress').setLevel(logging.ERROR)
-        # # waitress.serve(wsgiapp, listen=domain)
-        # self.server = waitress.server.create_server(wsgiapp, listen=domain, channel_timeout=1)
-        # self.server.run()
         host = self.app.settings.HOST
         port = 8000
         if self.app.settings.PORT:
