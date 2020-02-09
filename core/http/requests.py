@@ -2,6 +2,8 @@
 
 import webob
 from framework.core.http.session import Session
+from io import BytesIO
+import json
 
 
 MOCK_ENVIRON = {
@@ -38,6 +40,7 @@ class Request(webob.Request):
 
     def __init__(self, environ):
         webob.Request.__init__(self, environ)
+        # print(environ['wsgi.input'].read())
         self.route = None
         self.session = None
         self.model = None
@@ -87,12 +90,44 @@ class Request(webob.Request):
             return None
 
     @staticmethod
-    def mock(get={}, post={}, environ = {}):
+    def mock(get=None, body=None, environ = {}):
         environ = {**MOCK_ENVIRON, **environ}
-        if get != {}:
+        if get is not None:
             environ['QUERY_STRING'] = '&'.join([
                 str(k) + '=' + str(get[k]) for k in get
             ])
+        if body is not None:
+            environ['wsgi.input'] = body
+            environ['CONTENT_LENGTH'] = body.length
+            environ['REQUEST_METHOD'] = 'POST'
+            environ['CONTENT_TYPE'] = body.content_type
         return Request(environ)
 
+class Body(BytesIO):
+    """
+    A body which can be passed to a request as wsgi.input.
+    This is useful for mocking.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.length = None
+        self.content_type = 'application/x-www-form-urlencoded'
     
+    def urlencoded(self, data):
+        data = '&'.join([f'{k}={data[k]}' for k in data])
+        self.write(bytes(data.encode('utf-8')))
+
+    def multipart(self, data):
+        raise NotImplementedError('Multipart form data not implemented yet.')
+
+    def json(self, data):
+        self.content_type = 'application/json'
+        data = bytes(json.dumps(data).encode('utf-8'))
+        self.write(data)
+
+    def write(self, data):
+        super().write(data)
+
+        self.seek(0)
+        self.length = len(data)

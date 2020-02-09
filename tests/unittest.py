@@ -90,7 +90,14 @@ class Tester:
             self.print_line_end()
             
     def print_line_end(self):
-        print('\t(' + str(self.total) + '/' + str(len(self.all_tests)) + ')')
+        count = self.total % LINE_COUNT
+        print(
+            (' ' * (LINE_COUNT - (count if count else LINE_COUNT))) +\
+            '\t(' + str(self.total) +\
+            '/' +\
+            str(len(self.all_tests)) +\
+            ')'
+        )
 
     def print_end_status(self, start_time):
         time_string = self.get_time_string(time.time() - start_time)
