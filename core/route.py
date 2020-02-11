@@ -1,8 +1,8 @@
 """This file is in charge of routing."""
 from urllib.parse import urlparse
 from parse import parse
-from framework.utils.errors import abort
-from framework.core import app
+from webframe.utils.errors import abort
+from webframe.core import app
 
 class Router():
     """The router."""

@@ -4,8 +4,8 @@ Should be seperated into small operations so user can pick and choose
 how to use it.
 """
 
-from framework.core.http.session import Session
-from framework.utils import errors
+from webframe.core.http.session import Session
+from webframe.utils import errors
 
 
 def fetch_or_create_session(request, response):

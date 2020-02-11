@@ -4,11 +4,11 @@ There will be one controller per page/view.
 Each controller will implement a view method which will be in
 charge of returning a string.
 """
-from framework.utils import errors
-from framework.utils import views
-from framework.utils.auth import auth
-from framework.forms.form import Form
-from framework.core import app
+from webframe.utils import errors
+from webframe.utils import views
+from webframe.utils.auth import auth
+from webframe.forms.form import Form
+from webframe.core import app
 
 class Controller(object):
 

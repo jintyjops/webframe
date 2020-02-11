@@ -16,9 +16,9 @@ import traceback
 import time
 import checksumdir
 import logging
-import framework.core.wsgi as wsgi
-import framework.core.app as frameworkapp
-import framework.models.model as model
+import webframe.core.wsgi as wsgi
+import webframe.core.app as frameworkapp
+import webframe.models.model as model
 import wsgiserver
 
 

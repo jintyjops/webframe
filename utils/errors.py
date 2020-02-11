@@ -1,6 +1,6 @@
 """Utility function to throw errors."""
 
-from framework.core import app
+from webframe.core import app
 
 def abort(code, message=None):
     """Throw a http status error."""

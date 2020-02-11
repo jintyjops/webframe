@@ -4,12 +4,12 @@
 import sys
 import traceback
 from importlib import reload
-from framework.core.http.requests import Request
-from framework.core.http.responses import Response
-from framework.core.route import Router, ResourceRoute
-from framework.utils.errors import abort
-from framework.utils import errors, db
-from framework.core import app
+from webframe.core.http.requests import Request
+from webframe.core.http.responses import Response
+from webframe.core.route import Router, ResourceRoute
+from webframe.utils.errors import abort
+from webframe.utils import errors, db
+from webframe.core import app
 
 
 class WSGIApp(object):

@@ -1,6 +1,6 @@
 """In charge of setting up the test environment."""
 
-from framework.core import wsgi
+from webframe.core import wsgi
 
 def setup_unit_test_environment(application):
     """Setup unit test environment."""

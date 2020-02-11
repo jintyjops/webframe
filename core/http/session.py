@@ -6,7 +6,7 @@ import secrets
 import json
 import threading
 
-from framework.core import app
+from webframe.core import app
 
 # XXX Race condition if with two requests to same session at once.
 class SessionFileStore:

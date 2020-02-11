@@ -1,7 +1,7 @@
 """Defines some generic auth functionality for login/logout."""
 
 import bcrypt
-from framework.core import app
+from webframe.core import app
 from teamhub.models import User
 
 def auth(request):

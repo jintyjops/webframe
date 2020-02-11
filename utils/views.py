@@ -1,6 +1,6 @@
 """Utilities for generating views."""
-from framework.core import app
-from framework.utils import routes
+from webframe.core import app
+from webframe.utils import routes
 from jinja2 import Template
 
 def view(template, arguments={}):

@@ -4,8 +4,8 @@ import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String
-from framework.core import app
-from framework.utils.errors import abort
+from webframe.core import app
+from webframe.utils.errors import abort
 
 class Model():
     """Functionality for models."""

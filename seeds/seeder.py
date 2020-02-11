@@ -1,7 +1,7 @@
 """Base Seeder functionality."""
 
-from framework.core import app
-from framework.utils import db
+from webframe.core import app
+from webframe.utils import db
 
 class Seeder:
     """Base Seeder class."""

@@ -2,7 +2,7 @@
 
 import webob
 import json
-from framework.utils.errors import HttpError
+from webframe.utils.errors import HttpError
 
 
 class Response(webob.Response):

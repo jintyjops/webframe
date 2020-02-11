@@ -1,8 +1,8 @@
 """Reverse routes."""
 
 import parse
-from framework.core import app
-from framework.utils.errors import abort
+from webframe.core import app
+from webframe.utils.errors import abort
 
 def url(name, args={}, get={}):
     """Reverse the route in the routes file"""

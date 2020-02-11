@@ -4,8 +4,8 @@ import sys
 import traceback
 import time
 
-from framework.tests.testutils import TestUtils
-from framework.tests import _assert
+from webframe.tests.testutils import TestUtils
+from webframe.tests import _assert
 
 LINE_COUNT = 25
 

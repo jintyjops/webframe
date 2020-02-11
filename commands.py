@@ -22,9 +22,9 @@ import time
 import stringcase
 from sqlalchemy import MetaData
 from sqlalchemy_utils.functions import create_database, drop_database, database_exists
-import framework.models as models
-from framework.seeds import seeder
-from framework.tests import unittest
+import webframe.models as models
+from webframe.seeds import seeder
+from webframe.tests import unittest
 
 def parse_commands(settings):
     """Initiation point for parsing out of project runtime commands."""

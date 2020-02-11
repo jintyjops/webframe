@@ -1,7 +1,7 @@
 """Wrapper class for webob request to add functionality in future."""
 
 import webob
-from framework.core.http.session import Session
+from webframe.core.http.session import Session
 from io import BytesIO
 import json
 
