@@ -67,3 +67,9 @@ def is_type(_type, obj):
             'Failed asserting that ' + str(obj) + ' is type ' + str(_type)
         )
 
+@_assertion
+def fail(msg):
+    raise AssertionError(
+        'Failed with message: ' + str(msg)
+    )
+
