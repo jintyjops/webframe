@@ -78,6 +78,48 @@ class SessionFileStore:
         self.commit()
 
 
+class SessionMemoryStore:
+    """Interface for interacting with session store in memory."""
+
+    session = {}
+
+    def __init__(self, token, session_dir):
+        """Load the session."""
+        # Lock for this token.
+        self.token = token
+        self.session = {}
+
+    def fresh(self):
+        """Get latest session data."""
+        try:
+            self.session = SessionMemoryStore.session[self.token]
+        except KeyError:
+            self.session = {}
+
+    def commit(self):
+        """Commit the current session to the store."""
+        SessionMemoryStore.session[self.token] = self.session
+
+    def exists(self):
+        """True if session file exists."""
+        try:
+            SessionMemoryStore.session[self.token]
+            return True
+        except KeyError:
+            return False
+
+    def set_new_token(self, token):
+        """Sets new token, deletes old token."""
+        old = {}
+        try:
+            old = SessionMemoryStore.session[self.token]
+            del SessionMemoryStore.session[self.token]
+        except KeyError:
+            pass
+        SessionMemoryStore.session[token] = old
+        self.token = token
+
+
 class Session(object):
 
     # 32 characters should be enough.
@@ -85,7 +127,7 @@ class Session(object):
     # In seconds (86400 seconds == one day)
     CSRF_LIFE = 86400
 
-    def __init__(self, request):
+    def __init__(self, request, store_type=SessionFileStore):
         """Initialise session for this user."""
         self.request = request
         try:
@@ -102,7 +144,7 @@ class Session(object):
 
         session_dir = app.userapp.settings.STORAGE_DIR + '/sessions/'
 
-        self._store = SessionFileStore(self.token, session_dir)
+        self._store = store_type(self.token, session_dir)
         self._create_if_not_exists()
         self._clear_flash()
 
