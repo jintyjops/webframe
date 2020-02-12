@@ -48,7 +48,7 @@ class Auth():
         pk = self.request.session.get('_auth')
         if pk is None:
             return None
-        return self.usermodel.find(pk)
+        return self.usermodel.findOrFail(pk)
 
     def authed(self):
         """Determine if this session is authorized."""

@@ -47,9 +47,11 @@ class TestCase(TestUtils, metaclass=_Watcher):
         app.db.close()
 
     def GET(self, url, data={}):
+        data['_token'] = self.session.csrf_token()
         environ = {
             'PATH_INFO': url,
             'REQUEST_URI': url,
+            'HTTP_COOKIE': f'session={self.session.token}'
         }
         request = Request.mock(get=data, environ=environ)
         return self.request(request)
@@ -73,6 +75,10 @@ class TestCase(TestUtils, metaclass=_Watcher):
     def request(self, request):
         response = Response(request)
         return self.wsgiapp.generate(request, response)
+
+    def auth(self, user):
+        """Authorize this user for the duration of the unit test."""
+        self.session.store('_auth', user.id)
 
 class Test:
     def __init__(self, cls_name):
