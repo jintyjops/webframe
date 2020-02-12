@@ -60,7 +60,7 @@ class Controller(object):
         # To collect: global middleware, route specific middleware.
         # Global middleware takes priority.
         middleware = app.userapp.settings.GLOBAL_MIDDLEWARE +\
-                     self.request.route.middleware
+                    self.request.route.middleware
 
         for mware in middleware:
             mware(self.request, self.response)

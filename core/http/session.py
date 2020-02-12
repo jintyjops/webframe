@@ -127,7 +127,9 @@ class Session(object):
     # In seconds (86400 seconds == one day)
     CSRF_LIFE = 86400
 
-    def __init__(self, request, store_type=SessionFileStore):
+    StoreType = SessionFileStore
+
+    def __init__(self, request):
         """Initialise session for this user."""
         self.request = request
         try:
@@ -144,7 +146,7 @@ class Session(object):
 
         session_dir = app.userapp.settings.STORAGE_DIR + '/sessions/'
 
-        self._store = store_type(self.token, session_dir)
+        self._store = Session.StoreType(self.token, session_dir)
         self._create_if_not_exists()
         self._clear_flash()
 

@@ -15,11 +15,12 @@ def debug(to_print):
 class HttpError(Exception):
     """Wrapper for http errors."""
 
-    def __init__(self, code, message=None):
+    def __init__(self, code, message=None, response=None):
         if code < 100 or code >= 600:
             raise ValueError('Code ' + str(code) + ' is not a valid http status code.')
         self.code = code
         self.message = self._generate_message(code, message)
+        self.response = response
 
     def _generate_message(self, code, message):
         if message is not None and app.userapp.settings.DEBUG:

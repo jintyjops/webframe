@@ -39,7 +39,7 @@ def parse_commands(settings):
     if arg1 == 'migrate':
         _migrate(settings, arg2)
     elif arg1 == 'test':
-        _test(arg2)
+        _test(settings, arg2)
     elif arg1 == 'register-models':
         register_models(settings)
     else:
@@ -62,8 +62,8 @@ def _migrate(settings, arg):
         seeder.run_seeds(settings.seed_list, settings.ENGINE)
 
 
-def _test(arg):
-    unittest.run_tests(arg)
+def _test(settings, arg):
+    unittest.run_tests(settings, arg)
 
 
 def register_models(settings):

@@ -11,7 +11,7 @@ MOCK_ENVIRON = {
     'PATH_INFO': '/',
     'QUERY_STRING': '',
     'REMOTE_ADDR': '::1',
-    'REMOTE_PORT': '54789',
+    'REMOTE_PORT': '123456',
     'REQUEST_METHOD': 'GET',
     'REQUEST_URI': '/',
     'SCRIPT_NAME': '',
@@ -40,7 +40,6 @@ class Request(webob.Request):
 
     def __init__(self, environ):
         webob.Request.__init__(self, environ)
-        # print(environ['wsgi.input'].read())
         self.route = None
         self.session = None
         self.model = None

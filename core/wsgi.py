@@ -19,12 +19,19 @@ class WSGIApp(object):
         # Set up global variables
         app.userapp = userapp
         app.router = Router(app.userapp.routes.route.routes)
+        app.db = db.make_session(app.userapp.settings.ENGINE)
 
     def __call__(self, environ, start_response):
         """The app entry point."""
         request = Request(environ)
-        response = Response(request)
-        app.db = db.make_session(app.userapp.settings.ENGINE)
+        try:
+            response = self.generate(request, Response(request))
+        finally:
+            app.db.close()
+        return response(environ, start_response)
+
+    def generate(self, request, response):
+        """Takes request and response objects and returns response."""
         try:
             route = app.router.get_route(request)
 
@@ -42,13 +49,12 @@ class WSGIApp(object):
                     else:
                         raise errors.HttpError(500, '')
         except errors.HttpError as e:
+            if e.response:
+                response.location = e.response.location
             response.status = e.code
             response.text = e.message
-        finally:
-            app.db.close()
-                
-        #response.text = self.get_route(request.path)
-        return response(environ, start_response)
+
+        return response
 
     def get_response(self, Route, request, response):
         return Route.callable(request, response)

@@ -6,6 +6,13 @@ import time
 
 from webframe.tests.testutils import TestUtils
 from webframe.tests import _assert
+from webframe.models.model import Model
+from webframe.core import app
+from webframe.core.http.requests import Request, Body
+from webframe.core.http.responses import Response
+from webframe.core import wsgi
+
+from webframe.core.http.session import Session, SessionMemoryStore
 
 LINE_COUNT = 25
 
@@ -14,7 +21,7 @@ all_tests = {}
 
 class _Watcher(type):
 
-     def __init__(cls, name, bases, clsdict):
+    def __init__(cls, name, bases, clsdict):
         super(_Watcher, cls).__init__(name, bases, clsdict)
         if name != 'TestCase':
             all_test_cases[name] = cls
@@ -22,7 +29,50 @@ class _Watcher(type):
 
 class TestCase(TestUtils, metaclass=_Watcher):
     """Base test case."""
-    pass
+
+    def __init__(self, settings):
+        self.settings = settings
+        self.wsgiapp = None
+        self.session = None
+
+    def setup(self):
+        self.wsgiapp = wsgi.WSGIApp(self.settings.APP)
+        Session.StoreType = SessionMemoryStore
+        self.session = Session(Request.mock())
+        Model.commit_external = True
+
+    def teardown(self):
+        SessionMemoryStore.session = {}
+        app.db.rollback()
+        app.db.close()
+
+    def GET(self, url, data={}):
+        environ = {
+            'PATH_INFO': url,
+            'REQUEST_URI': url,
+        }
+        request = Request.mock(get=data, environ=environ)
+        return self.request(request)
+
+    def POST(self, url, data={}):
+        data['_token'] = self.session.csrf_token()
+        environ = {
+            'PATH_INFO': url,
+            'REQUEST_URI': url,
+            'HTTP_COOKIE': f'session={self.session.token}'
+        }
+        body = Body()
+        body.urlencoded(data)
+        request = Request.mock(body=body, environ=environ)
+        request.session = self.session
+        return self.request(request)
+
+    def JSON(self, url, data={}):
+        pass
+
+    def request(self, request):
+        response = Response(request)
+        return self.wsgiapp.generate(request, response)
 
 class Test:
     def __init__(self, cls_name):
@@ -36,12 +86,13 @@ class Test:
         all_tests[func] = self.cls_name
         return func
 
-def run_tests(function=None):
-    Tester(all_tests, function).run()
+def run_tests(settings, function=None):
+    Tester(settings, all_tests, function).run()
 
 class Tester:
 
-    def __init__(self, all_tests, function_filter=None):
+    def __init__(self, settings, all_tests, function_filter=None):
+        self.settings = settings
         self.all_tests = all_tests
         self.line_count = 0
         self.total = 0
@@ -60,7 +111,8 @@ class Tester:
         start_time = time.time()
 
         for testfunc in self.all_tests.keys():
-            clsInstance = all_test_cases[self.all_tests[testfunc]]()
+            clsInstance = all_test_cases[self.all_tests[testfunc]](self.settings)
+            clsInstance.setup()
             try:
                 testfunc(clsInstance)
 
@@ -75,6 +127,8 @@ class Tester:
             except Exception:
                 self.exceptions[testfunc] = traceback.format_exc()
                 self.print_status('E')
+            finally:
+                clsInstance.teardown()
             
             _assert._AssertionCounter.clearCount()
 

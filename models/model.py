@@ -10,6 +10,12 @@ from webframe.utils.errors import abort
 class Model():
     """Functionality for models."""
 
+    # Flag which determines if transaction commits will be applied 
+    # external to this class.
+    # Default is False, which will commit a transaction 
+    # on save(), save_all(), or delete()
+    commit_external = False
+
     # This is the Base sqlalchemy functionality
     # and should be inherited first.
     Base = declarative_base(name='Base')
@@ -27,14 +33,14 @@ class Model():
     def save(self):
         """Save the model."""
         self.stage()
-        app.db.commit()
+        Model.save_all()
 
         return self
 
     def delete(self):
         """Delete the model from the database."""
         app.db.delete(self)
-        app.db.commit()
+        Model.save_all()
 
     @classmethod
     def query(cls):
@@ -59,7 +65,8 @@ class Model():
     @staticmethod
     def save_all():
         """Commit all staged changes to the database."""
-        app.db.commit()
+        if not Model.commit_external:
+            app.db.commit()
     
     @staticmethod
     def _remake_base():
