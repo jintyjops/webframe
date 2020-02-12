@@ -42,6 +42,10 @@ class Model():
         app.db.delete(self)
         Model.save_all()
 
+    def fresh(self):
+        """Get a fresh object from the db."""
+        return app.db.expire(self)
+
     @classmethod
     def query(cls):
         """Create a new session query object for implementing class."""
@@ -65,7 +69,9 @@ class Model():
     @staticmethod
     def save_all():
         """Commit all staged changes to the database."""
-        if not Model.commit_external:
+        if Model.commit_external:
+            app.db.flush()
+        else:
             app.db.commit()
     
     @staticmethod
