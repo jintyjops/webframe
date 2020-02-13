@@ -73,3 +73,21 @@ def fail(msg):
         'Failed with message: ' + str(msg)
     )
 
+@_assertion
+def database_has(model, data):
+    results = model.query().filter_by(**data).all()
+
+    if not len(results):
+        raise AssertionError(
+            f'Failed asserting that {data} is in table {model.__tablename__}'
+        )
+
+@_assertion
+def database_missing(model, data):
+    results = model.query().filter_by(**data).all()
+
+    if len(results):
+        raise AssertionError(
+            f'Failed asserting that {data} is not in table {model.__tablename__}'
+        )
+

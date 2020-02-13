@@ -14,7 +14,7 @@ from webframe.core import wsgi
 
 from webframe.core.http.session import Session, SessionMemoryStore
 
-LINE_COUNT = 25
+LINE_COUNT = 50
 
 all_test_cases = {}
 all_tests = {}
