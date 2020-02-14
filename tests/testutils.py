@@ -1,6 +1,7 @@
 """Holds testing utilities."""
 
 import random
+import datetime
 import string
 
 class TestUtils:
@@ -23,3 +24,8 @@ class TestUtils:
 
     def html_bool_random(self):
         return 'on' if bool(random.choice([0, 1])) else ''
+
+    def date_random(self):
+        return datetime.datetime.now()
+
+tutils = TestUtils()
