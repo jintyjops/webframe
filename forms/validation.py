@@ -10,7 +10,7 @@ from sqlalchemy.sql.operators import ColumnOperators
 
 
 RFC_EMAIL_REGEX = re.compile(r"""(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])""")
-
+MAX_INT_SIZE = 2**32 - 1
 
 class Validator():
     """Base validator."""
@@ -103,12 +103,18 @@ class unique(Validator):
 class integer(Validator):
     """Returns error if input is not in email format."""
 
+    def __init__(self, max_size=MAX_INT_SIZE, message=None):
+        Validator.__init__(self, message)
+        self.max_size = max_size
+
     def validate(self, name, form):
         _input = form.input(name)
         if not form.has(name):
             return
         try:
-            int(_input)
+            val = int(_input)
+            if val >= self.max_size:
+                return f'The {name} field must be smaller than {str(self.max_size)}.'
         except ValueError:
             return 'The ' + name + ' field must be an integer.'
 
