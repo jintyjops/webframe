@@ -46,7 +46,7 @@ class TestCase(TestUtils, metaclass=_Watcher):
         app.db.rollback()
         app.db.close()
 
-    def GET(self, url, data={}):
+    def GET(self, url, data={}, previous=None):
         data['_token'] = self.session.csrf_token()
         environ = {
             'PATH_INFO': url,
@@ -54,9 +54,10 @@ class TestCase(TestUtils, metaclass=_Watcher):
             'HTTP_COOKIE': f'session={self.session.token}'
         }
         request = Request.mock(get=data, environ=environ)
+        request.referer = previous
         return self.request(request)
 
-    def POST(self, url, data={}):
+    def POST(self, url, data={}, previous=None):
         data['_token'] = self.session.csrf_token()
         environ = {
             'PATH_INFO': url,
@@ -66,11 +67,9 @@ class TestCase(TestUtils, metaclass=_Watcher):
         body = Body()
         body.urlencoded(data)
         request = Request.mock(body=body, environ=environ)
+        request.referer = previous
         request.session = self.session
         return self.request(request)
-
-    def JSON(self, url, data={}):
-        pass
 
     def request(self, request):
         response = Response(request)

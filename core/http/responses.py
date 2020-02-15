@@ -22,14 +22,8 @@ class Response(webob.Response):
         return 'Redirecting...'
 
     def redirect_back(self):
-        """Redirect back to last location visited on this session."""
-        location = None
-        try:
-            location = self.request.session.get('last_route')
-        except KeyError:
-            location = ''
-
-        return self.redirect(location)
+        """Redirect back to last location visited."""
+        return self.redirect(self.request.referer)
         
     
     def force_redirect(self, location):
