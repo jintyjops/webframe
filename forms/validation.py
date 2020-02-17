@@ -119,7 +119,7 @@ class integer(Validator):
             return 'The ' + name + ' field must be an integer.'
 
 class exists(Validator):
-    """Checks if given id on model exists in the database.."""
+    """Checks if given id on model exists in the database."""
 
     def __init__(self, model, message=None):
         """

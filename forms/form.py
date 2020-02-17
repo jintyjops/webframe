@@ -28,7 +28,7 @@ class Form(object):
                 pass
             try:
                 inp = html.escape(inp).strip()
-            except AttributeError:
+            except (AttributeError, TypeError):
                 pass
 
             sanitized[key] = inp

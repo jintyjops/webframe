@@ -37,7 +37,7 @@ class WSGIApp(object):
 
             if isinstance(route, ResourceRoute):
                 response.text = self.get_resource_response(route)
-                response.set_content_type('text/css')
+                response.set_content_type(str(request.accept))
             else:
                 request.set_route(route)
                 try:
