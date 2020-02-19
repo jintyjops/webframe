@@ -140,3 +140,24 @@ class exists(Validator):
 
         if model is None:
             return 'Invalid record.'
+
+class confirm(Validator):
+    """
+    Fails if there is not another value which matches this one 
+    with the key "<input_name>_confirm".
+    """
+
+    def validate(self, name, form):
+        othername = name + '_confirm'
+
+        if not form.has(name):
+            return
+
+        if form.has(name) and not form.has(othername):
+            return f'You must confirm the {name}.'
+
+        _input = form.input(name)
+        other = form.input(othername)
+
+        if _input != other:
+            return f'The {name} field must match.'
