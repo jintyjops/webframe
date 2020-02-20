@@ -4,7 +4,7 @@ import parse
 from webframe.core import app
 from webframe.utils.errors import abort
 
-def url(name, args={}, get={}):
+def url(name, args={}, get={}, include_host=False):
     """Reverse the route in the routes file"""
     routes = app.userapp.routes.route.routes
 
@@ -24,6 +24,17 @@ def url(name, args={}, get={}):
 
     if get_string:
         url += '?' + get_string
+
+    if include_host:
+        host = app.userapp.settings.HOST
+        port = app.userapp.settings.PORT
+        if port != 80:
+            host = f'{host}:{str(port)}'
+        if app.userapp.settings.USING_SSL:
+            host = f'https://{host}'
+        else:
+            host = f'http://{host}'
+        url = host + url
 
     return url
 
