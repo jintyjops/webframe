@@ -31,7 +31,7 @@ class Auth():
         if not bcrypt.checkpw(password.encode('UTF-8'), user.password.encode('UTF-8')):
             return False
 
-        if not custom_check(user):
+        if custom_check and not custom_check(user):
             return False
         
         # User is authorized store the users id.
