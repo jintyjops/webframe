@@ -121,7 +121,7 @@ class integer(Validator):
 class exists(Validator):
     """Checks if given id on model exists in the database."""
 
-    def __init__(self, model, message=None):
+    def __init__(self, model, column="id", message=None):
         """
         model: the model to query on
         column: the column on the model to check
@@ -129,6 +129,7 @@ class exists(Validator):
         """
         Validator.__init__(self, message)
         self.model = model
+        self.column = column
 
     def validate(self, name, form):
         _input = form.input(name)
@@ -136,9 +137,8 @@ class exists(Validator):
         if not form.has(name):
             return
 
-        model = self.model.find(_input)
-
-        if model is None:
+        count = self.model.query().filter_by(**{self.column: _input}).count()
+        if not count:
             return 'Invalid record.'
 
 class confirm(Validator):
