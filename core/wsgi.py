@@ -10,23 +10,30 @@ from webframe.core.route import Router, ResourceRoute
 from webframe.utils.errors import abort
 from webframe.utils import errors, db
 from webframe.core import app
+from threading import Semaphore
 
 
 class WSGIApp(object):
     """The app entry point from a wsgi call."""
+
+    conn_pool = None
 
     def __init__(self, userapp):
         # Set up global variables
         app.userapp = userapp
         app.router = Router(app.userapp.routes.route.routes)
         app.db = db.make_session(app.userapp.settings.ENGINE)
+        if WSGIApp.conn_pool is None:
+            WSGIApp.conn_pool = Semaphore(app.userapp.settings.MAX_CONNECTIONS)
 
-    def __call__(self, environ, start_response):
+    def  __call__(self, environ, start_response):
         """The app entry point."""
-        request = Request(environ)
+        WSGIApp.conn_pool.acquire()
         try:
+            request = Request(environ)
             response = self.generate(request, Response(request))
         finally:
+            WSGIApp.conn_pool.release()
             app.db.close()
         return response(environ, start_response)
 
