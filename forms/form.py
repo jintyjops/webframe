@@ -26,10 +26,10 @@ class Form(object):
                 key = html.escape(key).strip()
             except AttributeError:
                 pass
-            try:
-                inp = html.escape(inp).strip()
-            except (AttributeError, TypeError):
-                pass
+            # try:
+            #     inp = html.escape(inp).strip()
+            # except (AttributeError, TypeError):
+            #     pass
 
             sanitized[key] = inp
         
