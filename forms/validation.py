@@ -161,3 +161,25 @@ class confirm(Validator):
 
         if _input != other:
             return f'The {name} field must match.'
+
+class isin(Validator):
+    """
+    Fails if value is not in the given list
+    """
+
+    def __init__(self, values, message=None):
+        """
+        values: the values to check against
+        """
+        Validator.__init__(self, message)
+        self.values = values
+        self.one_of = ', '.join(v for v in values)
+
+    def validate(self, name, form):
+        if not form.has(name):
+            return
+
+        _input = form.input(name)
+
+        if _input not in self.values:
+            return f'The {name} field must be one of {self.one_of}.'
