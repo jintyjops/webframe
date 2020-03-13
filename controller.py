@@ -120,6 +120,11 @@ class Controller(object):
         Create a view with standard controller arguments.
         Arguments include, flash data, alerts, old input, errors.
         """
+        arguments = self.get_default_template_args(arguments)
+        return views.view(template, arguments)
+
+    def get_default_template_args(self, arguments):
+        """Get the default template arguments to be given to every template."""
         # Add arguments from response. (these are often set in middleware).
         arguments = {**self.response.template_args, **arguments}
         arguments['_token'] = self.request.session.csrf_token()
@@ -131,7 +136,7 @@ class Controller(object):
             arguments['authuser']
         except KeyError:
             arguments['authuser'] = auth(self.request).user()
-        return views.view(template, arguments)
+        return arguments
 
     def old(self, name):
         """Utility method to look in flash['old'] without throwing ke error."""
