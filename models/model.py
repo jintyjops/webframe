@@ -47,6 +47,20 @@ class Model():
         return app.db.expire(self)
 
     @classmethod
+    def create(cls):
+        """Create the table in the database. Does nothing if table exists."""
+        engine = app.userapp.settings.ENGINE
+        if not engine.dialect.has_table(engine, cls.__tablename__):
+            cls.__table__.create(app.userapp.settings.ENGINE)
+
+    @classmethod
+    def drop(cls):
+        """Drop the table from the database. Nothing if table does not exist."""
+        engine = app.userapp.settings.ENGINE
+        if engine.dialect.has_table(engine, cls.__tablename__):
+            cls.__table__.drop(app.userapp.settings.ENGINE)
+
+    @classmethod
     def query(cls):
         """Create a new session query object for implementing class."""
         return app.db.query(cls)
@@ -78,6 +92,21 @@ class Model():
     def _remake_base():
         """Utility method remaking the base on server restart."""
         Model.Base = declarative_base(name='Base')
+    
+    @staticmethod
+    def raw_command(command):
+        """Apply a raw command to the database."""
+        connection = app.userapp.settings.ENGINE.raw_connection()
+        cursor = connection.cursor()
+        cursor.execute(command)
+        connection.commit()
+        cursor.close()
+
+    @staticmethod
+    def drop_table(tablename):
+        """Drop a given table."""
+        Model.raw_command(f'DROP TABLE IF EXISTS {tablename};')
+    
 
 
     
