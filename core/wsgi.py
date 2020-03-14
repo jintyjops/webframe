@@ -13,18 +13,23 @@ from webframe.core import app
 from threading import Semaphore
 
 
+def app_setup(userapp):
+    """Set up global variables."""
+    app.userapp = userapp
+    app.router = Router(app.userapp.routes.route.routes)
+    if app.db is not None:
+        app.db.close()
+    app.db = db.make_session(app.userapp.settings.ENGINE)
+    if WSGIApp.conn_pool is None:
+        WSGIApp.conn_pool = Semaphore(app.userapp.settings.MAX_CONNECTIONS)
+
 class WSGIApp(object):
     """The app entry point from a wsgi call."""
 
     conn_pool = None
 
     def __init__(self, userapp):
-        # Set up global variables
-        app.userapp = userapp
-        app.router = Router(app.userapp.routes.route.routes)
-        app.db = db.make_session(app.userapp.settings.ENGINE)
-        if WSGIApp.conn_pool is None:
-            WSGIApp.conn_pool = Semaphore(app.userapp.settings.MAX_CONNECTIONS)
+        app_setup(userapp)
 
     def  __call__(self, environ, start_response):
         """The app entry point."""
