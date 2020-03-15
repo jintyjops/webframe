@@ -2,9 +2,9 @@
 Handles none runtime commands such as migrating data and unit tests.
 
 available commands are as follows:
-migrate
-    create a fresh database with all tables.
-migrate seed
+db:fresh
+    create a fresh database with all tables in main/projects.
+db:fresh seed
     same as migrate but seeds tables as well with registered seeders.
 test
     run all unit tests.
@@ -36,8 +36,8 @@ def parse_commands(settings):
     if len(sys.argv) > 2:
         arg2 = sys.argv[2]
 
-    if arg1 == 'migrate':
-        _migrate(settings, arg2)
+    if arg1 == 'db:fresh':
+        _reset_db(settings, arg2)
     elif arg1 == 'test':
         _test(settings, arg2)
     elif arg1 == 'register-models':
@@ -46,7 +46,7 @@ def parse_commands(settings):
         _usage()
 
 
-def _migrate(settings, arg):
+def _reset_db(settings, arg):
     # Drop and recreate database if it exists.
     if database_exists(settings.DB_CONNECTION):
         print('dropping current database...')
@@ -61,10 +61,8 @@ def _migrate(settings, arg):
     if arg == 'seed':
         seeder.run_seeds(settings.seed_list, settings.ENGINE)
 
-
 def _test(settings, arg):
     unittest.run_tests(settings, arg)
-
 
 def register_models(settings):
     initfile = settings.APP_LOCATION + '/models/__init__.py'
