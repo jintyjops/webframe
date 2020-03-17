@@ -3,6 +3,7 @@
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
 from sqlalchemy import Column, Integer, String
 from webframe.core import app
 from webframe.utils.errors import abort
@@ -94,18 +95,19 @@ class Model():
         Model.Base = declarative_base(name='Base')
     
     @staticmethod
-    def raw_command(command):
+    def raw_command(command, **kwargs):
         """Apply a raw command to the database."""
-        connection = app.userapp.settings.ENGINE.raw_connection()
-        cursor = connection.cursor()
-        cursor.execute(command)
+        connection = app.userapp.settings.ENGINE.connect()
+        connection.execute(command, **kwargs)
         connection.commit()
-        cursor.close()
 
     @staticmethod
     def drop_table(tablename):
         """Drop a given table."""
-        Model.raw_command(f'DROP TABLE IF EXISTS {tablename};')
+        Model.raw_command(
+            text('DROP TABLE IF EXISTS :tablename'),
+            tablename=tablename
+        )
     
 
 

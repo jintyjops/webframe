@@ -24,10 +24,16 @@ def make_folder(folder):
     """Create a folder in the storage directory."""
     os.mkdir(path(folder))
 
+def delete(folder=None, file=None):
+    if folder is None and file is None:
+        raise ValueError('You must specify at least one of file or folder.')
+    os.remove(path(folder, file))
+
 def path(folder=None, _file=None):
     """Get the main storage folder."""
-    p = {app.userapp.settings.STORAGE_DIR}
+    p = f'{app.userapp.settings.STORAGE_DIR}'
     if folder is not None:
         p += '/' + folder
     if _file is not None:
         p += '/' + _file
+    return p
