@@ -6,7 +6,7 @@ charge of returning a string.
 """
 from webframe.utils import errors
 from webframe.utils import views
-from webframe.utils.auth import auth
+from webframe.utils import auth
 from webframe.forms.form import Form
 from webframe.core import app
 

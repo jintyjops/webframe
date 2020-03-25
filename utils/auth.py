@@ -7,8 +7,17 @@ from teamhub.models import User
 def auth(request):
     return Auth(request, app.userapp.settings.AUTH_MODEL)
 
+def user():
+    """
+    Get the authorised user.
+    This requires that Auth.authuser has been set.
+    """
+    return Auth.authuser
+
 class Auth():
     """A simple wrapper around the session for authentication of users."""
+
+    authuser = None
 
     def __init__(self, request, usermodel):
         self.request = request
@@ -44,7 +53,11 @@ class Auth():
         self.request.session.destroy()
 
     def user(self):
-        """Get the authorised user model."""
+        """
+        Get the authorised user model.
+        This fecthes the user model from the database, unlike the user() 
+        function which will get Auth.authuser.
+        """
         pk = self.request.session.get('_auth')
         if pk is None:
             return None
