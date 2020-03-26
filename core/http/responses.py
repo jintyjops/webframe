@@ -41,3 +41,7 @@ class Response(webob.Response):
         """Generates json as body of request."""
         self.set_content_type('application/json')
         return json.dumps(jsonData)
+
+    def read_json(self):
+        """Return json data written to this response."""
+        return json.loads(self.text)
