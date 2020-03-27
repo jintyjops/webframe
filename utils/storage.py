@@ -4,13 +4,15 @@ import os, stat
 import shutil
 from webframe.core import app
 
-def store(data, folder=None, _file=None, binary=False):
+def store(data, folder=None, _file=None, binary=False, permissions=stat.S_IRWXU):
     """Store data in file in folder."""
     if not folder_exists(folder):
         make_folder(folder)
 
     with open(path(folder, _file), 'w' + ('b' if binary else '')) as f:
         f.write(data)
+    
+    os.chmod(path(folder, _file), permissions)
 
 def get(data, folder=None, _file=None, binary=False):
     """Get data from a file."""
