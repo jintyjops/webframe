@@ -23,15 +23,6 @@ def app_setup(userapp):
     app.db = db.make_session(app.userapp.settings.ENGINE)
     if WSGIApp.conn_pool is None:
         WSGIApp.conn_pool = Semaphore(app.userapp.settings.MAX_CONNECTIONS)
-    
-    if not storage.folder_exists('logs'):
-        storage.make_folder('logs')
-    logging.basicConfig(
-        format='%(asctime)s %(levelname)s: %(message)s',
-        datefmt='%m/%d/%Y %I:%M:%S %p',
-        filename=storage.path('logs', 'main.log'),
-        level=app.userapp.settings.LOG_LEVEL
-    )
 
 class WSGIApp(object):
     """The app entry point from a wsgi call."""
