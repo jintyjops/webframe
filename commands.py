@@ -19,6 +19,7 @@ import sys
 import os
 import glob
 import time
+import logging
 import stringcase
 from sqlalchemy import MetaData
 from sqlalchemy_utils.functions import create_database, drop_database, database_exists
@@ -37,12 +38,19 @@ def parse_commands(settings):
         arg2 = sys.argv[2]
 
     if arg1 == 'db:fresh':
+        logging.info('Creating fresh DB...')
         _reset_db(settings, arg2)
+        logging.info('Fresh DB created.')
     elif arg1 == 'test':
+        logging.info('Running tests...')
         _test(settings, arg2)
+        logging.info('Tests run successfully.')
     elif arg1 == 'register-models':
+        logging.info('Registering models...')
         register_models(settings)
+        logging.info('Models registered.')
     else:
+        logging.info('Printing info, someone needs reminding ;)')
         _usage()
 
 
@@ -59,6 +67,7 @@ def _reset_db(settings, arg):
     print('tables created in ' + str(time.time() - start_time)[:5] + ' seconds.')
 
     if arg == 'seed':
+        logging.info('Seeding...')
         seeder.run_seeds(settings.seed_list, settings.ENGINE)
 
 def _test(settings, arg):

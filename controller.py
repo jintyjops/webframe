@@ -4,6 +4,7 @@ There will be one controller per page/view.
 Each controller will implement a view method which will be in
 charge of returning a string.
 """
+import logging
 from webframe.utils import errors
 from webframe.utils import views
 from webframe.utils import auth
@@ -85,9 +86,11 @@ class Controller(object):
         if model is None or model_id is None:
             return None
 
-        record = model.find(self.request.url_param(model_id))
+        passed_id = self.request.url_param(model_id)
+        record = model.find(passed_id)
 
         if record is None:
+            logging.error('Unable to get model \'%s\' with id \'%s\'', model.__tablename__, passed_id)
             errors.abort(
                 404,
                 'Unable to find record.'
@@ -112,6 +115,7 @@ class Controller(object):
         self.request.session.flash('old', self.form.params)
         # Flash Errors
         self.request.session.flash('errors', self.form.errors)
+        logging.info('Form invalid, errors: %s', str(self.form.errors))
         # Redirect to previous url
         self.response.force_redirect_back()
 
@@ -181,6 +185,7 @@ class Controller(object):
         This should be in charge of handling generating the view.
         If not implemented then throws http 500 error.
         """
+        logging.debug('Unimplemented view method!')
         errors.abort(
             500,
             'Unimplemented view method in: ' +\

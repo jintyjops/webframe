@@ -1,5 +1,6 @@
 """Session handler for the framework."""
 import os
+import logging
 from base64 import b64encode
 import time
 import secrets
@@ -35,7 +36,9 @@ class SessionFileStore:
         try:
             with open(self.session_dir + self.token, 'r') as f:
                 sess = json.loads(f.read())
-        except (IOError, json.decoder.JSONDecodeError):
+        except (IOError, json.decoder.JSONDecodeError) as e:
+            logging.warning('Unable to load session.')
+            logging.exception(e)
             pass
         finally:
             self.lock.release()
@@ -53,7 +56,9 @@ class SessionFileStore:
             with open(self.session_dir + self.token, 'w') as f:
                 f.write(json.dumps(self.session))
             return True
-        except IOError:
+        except IOError as e:
+            logging.warning('Unable to commit sessions.')
+            logging.exception(e)
             return False
         finally:
             self.lock.release()
@@ -68,7 +73,9 @@ class SessionFileStore:
         self.lock.acquire()
         try:
             os.remove(self.session_dir + self.token)
-        except IOError:
+        except IOError as e:
+            logging.warning('Unable to remove old session.')
+            logging.exception(e)
             pass
         finally:
             self.lock.release()

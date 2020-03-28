@@ -3,15 +3,16 @@
 
 import sys
 import traceback
+import logging
 from importlib import reload
 from webframe.core.http.requests import Request
 from webframe.core.http.responses import Response
 from webframe.core.route import Router, ResourceRoute
+from webframe.utils import storage
 from webframe.utils.errors import abort
 from webframe.utils import errors, db
 from webframe.core import app
 from threading import Semaphore
-
 
 def app_setup(userapp):
     """Set up global variables."""
@@ -22,6 +23,15 @@ def app_setup(userapp):
     app.db = db.make_session(app.userapp.settings.ENGINE)
     if WSGIApp.conn_pool is None:
         WSGIApp.conn_pool = Semaphore(app.userapp.settings.MAX_CONNECTIONS)
+    
+    if not storage.folder_exists('logs'):
+        storage.make_folder('logs')
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)s: %(message)s',
+        datefmt='%m/%d/%Y %I:%M:%S %p',
+        filename=storage.path('logs', 'main.log'),
+        level=app.userapp.settings.LOG_LEVEL
+    )
 
 class WSGIApp(object):
     """The app entry point from a wsgi call."""
@@ -34,9 +44,19 @@ class WSGIApp(object):
     def  __call__(self, environ, start_response):
         """The app entry point."""
         WSGIApp.conn_pool.acquire()
+        logging.info('New request incoming...')
         try:
             request = Request(environ)
+            logging.info(
+                'New \'%s\' request for \'%s\' from \'%s\'',
+                request.method,
+                request.path,
+                request.client_addr
+            )
             response = self.generate(request, Response(request))
+        except Exception as e:
+            logging.exception(e)
+            raise e
         finally:
             WSGIApp.conn_pool.release()
             app.db.close()
@@ -48,12 +68,15 @@ class WSGIApp(object):
             route = app.router.get_route(request)
 
             if isinstance(route, ResourceRoute):
+                logging.info('Route is resource route.')
                 response.text = self.get_resource_response(route)
                 response.set_content_type(str(request.accept))
             else:
+                logging.info('Fetching response...')
                 request.set_route(route)
                 try:
                     response.text = self.get_response(route, request, response)
+                    logging.info('Response fetched...')
                 except errors.DebugError as e:
                     if app.userapp.settings.DEBUG:
                         response.status = 500
@@ -61,10 +84,14 @@ class WSGIApp(object):
                     else:
                         raise errors.HttpError(500, '')
         except errors.HttpError as e:
+            if e.code == 500:
+                logging.exception(e)
             if e.response:
                 response.location = e.response.location
             response.status = e.code
             response.text = e.message
+
+        logging.info('Status: %s', response.status)
 
         return response
 
@@ -78,4 +105,5 @@ class WSGIApp(object):
             with open(path, 'r', encoding='utf8') as resource:
                 return resource.read()
         except IOError:
+            logging.warning('IOError while trying to access resource.')
             abort(404)
