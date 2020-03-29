@@ -103,9 +103,10 @@ class unique(Validator):
 class integer(Validator):
     """Returns error if input is not in email format."""
 
-    def __init__(self, max_size=MAX_INT_SIZE, message=None):
+    def __init__(self, max_size=MAX_INT_SIZE, min_size=0, message=None):
         Validator.__init__(self, message)
         self.max_size = max_size
+        self.min_size = min_size
 
     def validate(self, name, form):
         _input = form.input(name)
@@ -115,6 +116,8 @@ class integer(Validator):
             val = int(_input)
             if val >= self.max_size:
                 return f'The {name} field must be smaller than {str(self.max_size)}.'
+            if val < self.min_size:
+                return f'The {name} field must be greater than {str(self.min_size)}.'
         except ValueError:
             return 'The ' + name + ' field must be an integer.'
 

@@ -1,6 +1,7 @@
 """Session handler for the framework."""
 import os
 import logging
+import datetime
 from base64 import b64encode
 import time
 import secrets
@@ -11,7 +12,11 @@ from webframe.core import app
 
 # XXX Race condition if with two requests to same session at once.
 class SessionFileStore:
-    """Interface for interacting with session store."""
+    """
+    Interface for interacting with session store.
+    Note: the object pattern {'_type': type, 'value': value} is reserved
+    by this file store.
+    """
 
     def __init__(self, token, session_dir):
         """Load the session."""
@@ -35,7 +40,7 @@ class SessionFileStore:
         self.lock.acquire()
         try:
             with open(self.session_dir + self.token, 'r') as f:
-                sess = json.loads(f.read())
+                sess = json.loads(f.read(), object_hook=self.from_json_converter)
         except (IOError, json.decoder.JSONDecodeError) as e:
             logging.warning('Unable to load session.')
             logging.exception(e)
@@ -54,7 +59,7 @@ class SessionFileStore:
         self.lock.acquire()
         try:
             with open(self.session_dir + self.token, 'w') as f:
-                f.write(json.dumps(self.session))
+                f.write(json.dumps(self.session, default=self.to_json_converter))
             return True
         except IOError as e:
             logging.warning('Unable to commit sessions.')
@@ -62,6 +67,18 @@ class SessionFileStore:
             return False
         finally:
             self.lock.release()
+
+    def to_json_converter(self, obj):
+        """Converts non native json types to json from python objects."""
+        if isinstance(obj, datetime.datetime):
+            return {'_type': 'datetime', 'value': obj.isoformat()}
+    
+    def from_json_converter(self, obj):
+        """Converts any non native json values to respective python objects"""
+        if '_type' in obj and 'value' in obj:
+            if obj['_type'] == 'datetime':
+                return datetime.datetime.fromisoformat(obj['value'])
+        return obj
 
     def exists(self):
         """True if session file exists."""
@@ -84,33 +101,48 @@ class SessionFileStore:
         self.token = token
         self.commit()
 
+    def destroy(self):
+        """Destroy the session."""
+        os.remove(os.path.join(self.session_dir, self.token))
+
+    @staticmethod
+    def all_session_tokens(session_dir):
+        """Get all the current session tokens."""
+        session_files = [
+            f for f in os.listdir(session_dir)
+            if os.path.isfile(os.path.join(session_dir, f))
+        ]
+        return session_files
 
 class SessionMemoryStore:
     """Interface for interacting with session store in memory."""
 
-    session = {}
+    sessions = {}
 
     def __init__(self, token, session_dir):
         """Load the session."""
         # Lock for this token.
         self.token = token
-        self.session = {}
+        try:
+            self.session = SessionMemoryStore.sessions[self.token]
+        except KeyError:
+            self.session = {}
 
     def fresh(self):
         """Get latest session data."""
         try:
-            self.session = SessionMemoryStore.session[self.token]
+            self.session = SessionMemoryStore.sessions[self.token]
         except KeyError:
             self.session = {}
 
     def commit(self):
         """Commit the current session to the store."""
-        SessionMemoryStore.session[self.token] = self.session
+        SessionMemoryStore.sessions[self.token] = self.session
 
     def exists(self):
         """True if session file exists."""
         try:
-            SessionMemoryStore.session[self.token]
+            SessionMemoryStore.sessions[self.token]
             return True
         except KeyError:
             return False
@@ -119,18 +151,26 @@ class SessionMemoryStore:
         """Sets new token, deletes old token."""
         old = {}
         try:
-            old = SessionMemoryStore.session[self.token]
-            del SessionMemoryStore.session[self.token]
+            old = SessionMemoryStore.sessions[self.token]
+            del SessionMemoryStore.sessions[self.token]
         except KeyError:
             pass
-        SessionMemoryStore.session[token] = old
+        SessionMemoryStore.sessions[token] = old
         self.token = token
+    
+    def destroy(self):
+        """Destroy the session."""
+        del SessionMemoryStore.sessions[self.token]
 
+    @staticmethod
+    def all_session_tokens(session_dir):
+        """Get all the current session tokens."""
+        return [k for k in SessionMemoryStore.sessions.keys()]
 
+# 32 characters should be enough.
+TOKEN_LENGTH = 32
 class Session(object):
 
-    # 32 characters should be enough.
-    TOKEN_LENGTH = 32
     # In seconds (86400 seconds == one day)
     CSRF_LIFE = 86400
 
@@ -138,7 +178,12 @@ class Session(object):
 
     def __init__(self, request):
         """Initialise session for this user."""
+        session_dir = app.userapp.settings.STORAGE_DIR + '/sessions/'
+
+        self._purge_expired_sessions(session_dir)
+
         self.request = request
+        self.session_expiry = app.userapp.settings.SESSION_EXPIRY
         try:
             # Check is Cookie actually exists
             self.request.headers['Cookie']
@@ -149,15 +194,27 @@ class Session(object):
         try:
             self.token = cookies['session']
         except KeyError:
-            self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
-
-        session_dir = app.userapp.settings.STORAGE_DIR + '/sessions/'
+            self.token = self._generate_new_session_token()
 
         self._store = Session.StoreType(self.token, session_dir)
         self._create_if_not_exists()
         self._clear_flash()
+        self._update_expiry()
+        self.commit()
 
-    def _generate_new_session_token(self, length):
+    def _purge_expired_sessions(self, session_dir):
+        """Remove expired sessions."""
+        tokens = Session.StoreType.all_session_tokens(session_dir)
+        for token in tokens:
+            store = Session.StoreType(token, session_dir)
+            try:
+                expiry = store.session['expiry']
+                if expiry < datetime.datetime.now():
+                    raise KeyError
+            except KeyError:
+                store.destroy()
+
+    def _generate_new_session_token(self, length=TOKEN_LENGTH):
         """Returns a new session token."""
         return str(secrets.token_hex(32))
 
@@ -165,24 +222,36 @@ class Session(object):
         """Try to get or create then return a session with the current token."""
         if not self._store.exists():
             self._set_fresh_session()
-            self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
+            self.token = self._generate_new_session_token()
             self._store.set_new_token(self.token)
+
+    def _get_new_session_expiry_from_now(self):
+        expiry = datetime.datetime.now() + datetime.timedelta(days=365)
+        if self.session_expiry > 0:
+            expiry = datetime.datetime.now() + datetime.timedelta(seconds=self.session_expiry)
+        return expiry
 
     def _set_fresh_session(self):
         self._store.session = {
             'flash': {},
-            'csrf': None
+            'csrf': None,
+            'expiry': self._get_new_session_expiry_from_now()
         }
 
     def _clear_flash(self):
         try:
-            if not self.get('dont_clear_flash'):
-                raise KeyError()
+            self._store.session['dont_clear_flash']
         except KeyError:
             self._store.session['flash'] = {}
-            pass
 
         self.delete('dont_clear_flash')
+    
+    def _update_expiry(self):
+        """Updates expiry for this request."""
+        try:
+            self._store.session['expiry'] = self._get_new_session_expiry_from_now()
+        except KeyError:
+            pass
 
     def get(self, key):
         """Get a value from the current session."""
@@ -208,7 +277,7 @@ class Session(object):
     def destroy(self):
         """Destroy the session completely."""
         self._set_fresh_session()
-        self.token = self._generate_new_session_token(Session.TOKEN_LENGTH)
+        self.token = self._generate_new_session_token()
         self._store.set_new_token(self.token)
 
     def flash(self, key, value):

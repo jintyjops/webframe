@@ -39,10 +39,11 @@ class TestCase(TestUtils, metaclass=_Watcher):
         self.wsgiapp = wsgi.WSGIApp(self.settings.APP)
         Session.StoreType = SessionMemoryStore
         self.session = Session(Request.mock())
+        self.session.commit()
         Model.commit_external = True
 
     def teardown(self):
-        SessionMemoryStore.session = {}
+        SessionMemoryStore.sessions = {}
         app.db.rollback()
         app.db.close()
 
@@ -82,6 +83,7 @@ class TestCase(TestUtils, metaclass=_Watcher):
     def auth(self, user):
         """Authorize this user for the duration of the unit test."""
         self.session.store('_auth', user.id)
+        self.session.commit()
 
 class Test:
     def __init__(self, cls_name):
