@@ -51,7 +51,21 @@ class WSGIApp(object):
                 return response(environ, start_response)
         except Exception as e:
             logging.exception(e)
-            raise e
+            traceback.print_stack()
+            # Do some wsgi hackery
+            body = ''
+            status = f'{str(500)}'
+            headers = [('Content-type', 'text/plain')]
+            try:
+                body = app.userapp.settings.ERROR_HANDLERS[500](traceback.format_exc())
+                headers = [('Content-type', 'text/html')]
+            except Exception as e:
+                print('yeet2')
+                logging.error('Error while trying to get 500 error page.')
+                logging.exception(e)
+                body = 'Internal server error.'
+            start_response(status, headers)
+            return [body.encode('utf-8')]
         finally:
             WSGIApp.conn_pool.release()
             app.db.close()
@@ -83,7 +97,10 @@ class WSGIApp(object):
             if e.response:
                 response.location = e.response.location
             response.status = e.code
-            response.text = e.message
+            try:
+                response.text = app.userapp.settings.ERROR_HANDLERS[int(e.code)](e.message)
+            except (KeyError, ValueError):
+                response.text = e.message
 
         logging.info('Status: %s', response.status)
 
