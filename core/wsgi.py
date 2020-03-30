@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """The WSGI entry/communication point for the app."""
 
+import os
 import sys
 import traceback
 import logging
 from importlib import reload
+from webob.static import FileApp
 from webframe.core.http.requests import Request
 from webframe.core.http.responses import Response
 from webframe.core.route import Router, ResourceRoute
@@ -45,6 +47,8 @@ class WSGIApp(object):
                 request.client_addr
             )
             response = self.generate(request, Response(request))
+            if response.__class__ == FileApp:
+                return response(environ, start_response)
         except Exception as e:
             logging.exception(e)
             raise e
@@ -60,8 +64,7 @@ class WSGIApp(object):
 
             if isinstance(route, ResourceRoute):
                 logging.info('Route is resource route.')
-                response.text = self.get_resource_response(route)
-                response.set_content_type(str(request.accept))
+                return self.get_resource_response(response, route)
             else:
                 logging.info('Fetching response...')
                 request.set_route(route)
@@ -89,12 +92,13 @@ class WSGIApp(object):
     def get_response(self, Route, request, response):
         return Route.callable(request, response)
 
-    def get_resource_response(self, route):
+    def get_resource_response(self, response, route):
         """Serve a resource."""
         try:
             path = app.userapp.settings.RESOURCE_DIR + '/' + route.path
-            with open(path, 'r', encoding='utf8') as resource:
-                return resource.read()
+            if not os.path.exists(path) or not os.path.isfile(path):
+                raise IOError
+            return FileApp(path)
         except IOError:
             logging.warning('IOError while trying to access resource.')
             abort(404)

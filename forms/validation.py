@@ -6,6 +6,9 @@ Each callable must take a Form argument and a name argument and return either:
 
 from abc import abstractmethod
 import re
+import mimetypes
+import filetype
+import tempfile
 from sqlalchemy.sql.operators import ColumnOperators
 
 
@@ -186,3 +189,36 @@ class isin(Validator):
 
         if _input not in self.values:
             return f'The {name} field must be one of {self.one_of}.'
+
+class _file(Validator):
+    """
+    Checks if file. Creates a tempfile for the file.
+    """
+
+    def __init__(self, mimetypes=[], max_size=MAX_INT_SIZE, message=None):
+        """
+        Set the acceptable mimetypes and max size (in bytes) of the file.
+        Leave blank for any mimetype or filesize.
+        """
+        Validator.__init__(self, message)
+        self.mimetypes = mimetypes
+        self.max_size = max_size
+
+    def validate(self, name, form):
+        if not form.has(name):
+            return
+
+        _input = form.input(name)
+
+        if _input.__class__.__name__ != 'cgi_FieldStorage' and not bool(_input):
+            return
+
+        if _input.__class__.__name__ != 'cgi_FieldStorage':
+            return 'You must upload a file.'
+        
+        if len(_input.value) >= self.max_size:
+            return f'File must be smaller than {int(self.max_size / 1000)}KB.'
+        _type = filetype.guess(_input.value)
+        if len(self.mimetypes) and _type is not None and _type.mime not in self.mimetypes:
+            types = ', '.join([k for k, v in mimetypes.types_map.items() if v in self.mimetypes])
+            return f'File must be one of {types}.'

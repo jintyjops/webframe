@@ -1,6 +1,9 @@
 """Base forms and form utilities."""
 
+import os
 import html
+import secrets
+import filetype
 
 class Form(object):
     """Base Form."""
@@ -85,3 +88,34 @@ class Form(object):
             return _input
         except KeyError:
             return None
+
+    def has_file(self, name):
+        """
+        Check if the file was uploaded.
+        Files behave differently to normal inputs and the has() function
+        will return true no matter if the file was uploaded or not.
+        """
+        return bool(self.input(name).__class__.__name__ == 'cgi_FieldStorage')
+
+    def store_file(self, name, location, filename=None, extension=None):
+        """
+        Store an uploaded file with input "name" to a location.
+        If extension is None it will try to find the correct extension.
+        If filename is None it will generate a random name.
+        Returns filename.
+        """
+        f = self.input(name)
+        if filename is None:
+            filename = secrets.token_hex(16)
+        if extension is None:
+            _type = filetype.guess(f.value)
+            if _type is not None:
+                extension = _type.extension
+        path = os.path.join(location, f'{filename}.{extension}')
+        if not os.path.exists(location) or not os.path.isdir(location):
+            os.mkdir(location)
+        
+        with open(path, 'wb') as _file:
+            _file.write(f.value)
+
+        return path
