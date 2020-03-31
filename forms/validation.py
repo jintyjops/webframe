@@ -39,6 +39,13 @@ class required(Validator):
         if not form.has(name):
             return 'The ' + name + ' field is required.'
 
+class file_required(Validator):
+    """Returns error if input is not file."""
+
+    def validate(self, name, form):
+        if not form.has_file(name):
+            return 'The ' + name + ' field is required.'
+
 class max_len(Validator):
     """The maximum length of the input in characters."""
     def __init__(self, length, message=None):

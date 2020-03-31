@@ -1,6 +1,7 @@
 """Wrapper class for webob response to add functionality in future."""
 
 import webob
+from webob.static import FileApp
 import json
 from webframe.utils.errors import HttpError
 
@@ -41,6 +42,22 @@ class Response(webob.Response):
         """Generates json as body of request."""
         self.set_content_type('application/json')
         return json.dumps(jsonData)
+
+    def download(self, filename, downloadname, download=True):
+        """
+        Returns a download stream.
+        filename is location of file.
+        downloadname is name to download with.
+        download (default True): specify whether to download the file or display 
+            it inline (aka: content disposition: attachement or inline)
+        """
+        disposition = 'attachment'
+        if not download:
+            disposition = 'inline'
+
+        return FileApp(filename, headerlist=[
+            ['Content-Disposition', f'{disposition}; filename="{downloadname}"']
+        ])
 
     def read_json(self):
         """Return json data written to this response."""

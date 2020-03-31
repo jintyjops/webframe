@@ -83,7 +83,11 @@ class WSGIApp(object):
                 logging.info('Fetching response...')
                 request.set_route(route)
                 try:
-                    response.text = self.get_response(route, request, response)
+                    rp = self.get_response(route, request, response)
+                    # For file streams.
+                    if rp.__class__ == FileApp:
+                        return rp
+                    response.text = rp
                     logging.info('Response fetched...')
                 except errors.DebugError as e:
                     if app.userapp.settings.DEBUG:
