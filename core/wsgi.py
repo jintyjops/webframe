@@ -60,7 +60,6 @@ class WSGIApp(object):
                 body = app.userapp.settings.ERROR_HANDLERS[500](traceback.format_exc())
                 headers = [('Content-type', 'text/html')]
             except Exception as e:
-                print('yeet2')
                 logging.error('Error while trying to get 500 error page.')
                 logging.exception(e)
                 body = 'Internal server error.'
