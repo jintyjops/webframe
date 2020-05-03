@@ -2,7 +2,6 @@
 
 import bcrypt
 from webframe.core import app
-from teamhub.models import User
 
 def auth(request):
     return Auth(request, app.userapp.settings.AUTH_MODEL)
