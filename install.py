@@ -266,6 +266,19 @@ main.DevApp({%name%})
 """,
 
 # FILE
+'../project.py':
+"""
+\"\"\"Run commands for the project such as migration and unit test.\"\"\"
+
+import sys
+from webframe import commands
+from {%name%} import settings
+
+if __name__ == '__main__':
+    commands.parse_commands(settings)
+""",
+
+# FILE
 '../settings.conf':
 """
 // Is the app in debug mode

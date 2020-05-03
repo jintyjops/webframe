@@ -91,10 +91,7 @@ class Controller(object):
 
         if record is None:
             logging.error('Unable to get model \'%s\' with id \'%s\'', model.__tablename__, passed_id)
-            errors.abort(
-                404,
-                'Unable to find record.'
-            )
+            errors.abort(404, 'Unable to find record.')
 
         return record
 
