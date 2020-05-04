@@ -128,15 +128,17 @@ class Controller(object):
         """Get the default template arguments to be given to every template."""
         # Add arguments from response. (these are often set in middleware).
         arguments = {**self.response.template_args, **arguments}
-        arguments['_token'] = self.request.session.csrf_token()
-        arguments['alerts'] = self._get_alerts()
-        arguments['errors'] = self._get_errors()
-        arguments['old'] = self._get_old_input()
-        #  Only add authuser if it does not exist.
-        try:
-            arguments['authuser']
-        except KeyError:
-            arguments['authuser'] = auth(self.request).user()
+        # This data dependent on session and session may no exist.
+        if self.request.session is not None:
+            arguments['_token'] = self.request.session.csrf_token()
+            arguments['alerts'] = self._get_alerts()
+            arguments['errors'] = self._get_errors()
+            arguments['old'] = self._get_old_input()
+            #  Only add authuser if it does not exist.
+            try:
+                arguments['authuser']
+            except KeyError:
+                arguments['authuser'] = auth(self.request).user()
         return arguments
 
     def old(self, name):
