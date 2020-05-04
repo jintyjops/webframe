@@ -6,6 +6,8 @@ db:fresh
     create a fresh database with all tables in main/projects.
 db:fresh seed
     same as migrate but seeds tables as well with registered seeders.
+db:seed
+    Run the seeders listed in settings.py
 test
     run all unit tests.
 test <function_name>
@@ -32,6 +34,8 @@ def parse_commands(settings):
     arg1 = None
     arg2 = None
 
+    settings.app_setup()
+
     if len(sys.argv) > 1:
         arg1 = sys.argv[1]
     if len(sys.argv) > 2:
@@ -41,6 +45,8 @@ def parse_commands(settings):
         logging.info('Creating fresh DB...')
         _reset_db(settings, arg2)
         logging.info('Fresh DB created.')
+    elif arg1 == 'db:seed':
+        _seed_db(settings)
     elif arg1 == 'test':
         logging.info('Running tests...')
         _test(settings, arg2)
@@ -67,8 +73,12 @@ def _reset_db(settings, arg):
     print('tables created in ' + str(time.time() - start_time)[:5] + ' seconds.')
 
     if arg == 'seed':
-        logging.info('Seeding...')
-        seeder.run_seeds(settings.seed_list, settings.ENGINE)
+        _seed_db(settings)
+
+def _seed_db(settings):
+    logging.info('Seeding...')
+    seeder.run_seeds(settings.seed_list, settings.ENGINE)
+    logging.info('Seeded.')
 
 def _test(settings, arg):
     unittest.run_tests(settings, arg)

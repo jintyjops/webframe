@@ -74,5 +74,3 @@ class App():
             storage.make_folder('sessions')
         if not storage.folder_exists('logs'):
             storage.make_folder('logs')
-
-        

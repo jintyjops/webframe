@@ -69,7 +69,7 @@ class ExampleGETController(Controller):
             <table>
                 <tr>
                     <td>Current Version:</td>
-                    <td>v0.1 alpha</td>
+                    <td>v0.2.0</td>
                 </tr>
             </table>
             <p>
