@@ -18,9 +18,6 @@ to_make = {
         'resources',
         'resources/templates',
         'routes',
-        '../storage',
-        '../storage/logs',
-        '../storage/sessions',
     ],
     'files': {
 

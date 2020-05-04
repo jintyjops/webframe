@@ -5,6 +5,7 @@ Made this way so that parts of the program called from the user app
 can access the settings module.
 """
 
+import os
 from threading import Semaphore
 from webframe.utils import db
 
@@ -47,12 +48,31 @@ class App():
     @staticmethod
     def app_setup(usersapp):
         """Set up global variables."""
-        # import here to avoid circular dependency issues.
+        # Some imports here to avoid circular dependency issues.
         from webframe.core.route import Router
+        from webframe.utils import storage
+
+        # Set users application
         App._userapp = usersapp
+
+        # Creating router
         App._router = Router(App._userapp.routes.route.routes)
+
+        # This will ensure session does not expire
         if App._db is not None:
             App._db.close()
         App._db = db.make_session(App._userapp.settings.ENGINE)
+
+        # Setup connection pool if it doesn't exist.
         if App._conn_pool is None:
             App._conn_pool = Semaphore(App._userapp.settings.MAX_CONNECTIONS)
+
+        # Auto creation of storage folders if they don't exist.
+        if not storage.folder_exists('/'):
+            storage.make_folder('/')
+        if not storage.folder_exists('sessions'):
+            storage.make_folder('sessions')
+        if not storage.folder_exists('logs'):
+            storage.make_folder('logs')
+
+        
