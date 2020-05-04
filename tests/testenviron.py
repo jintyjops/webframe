@@ -2,7 +2,6 @@
 
 from webframe.core import wsgi
 from webframe.utils import db
-from webframe.core import app
 
 def setup_unit_test_environment(application):
     """Setup unit test environment."""

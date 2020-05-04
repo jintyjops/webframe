@@ -7,7 +7,7 @@ import time
 from webframe.tests.testutils import TestUtils
 from webframe.tests import _assert
 from webframe.models.model import Model
-from webframe.core import app
+from webframe.core.app import App
 from webframe.core.http.requests import Request, Body
 from webframe.core.http.responses import Response
 from webframe.core import wsgi
@@ -44,8 +44,8 @@ class TestCase(TestUtils, metaclass=_Watcher):
 
     def teardown(self):
         SessionMemoryStore.sessions = {}
-        app.db.rollback()
-        app.db.close()
+        App().db().rollback()
+        App().db().close()
 
     def GET(self, url, data={}, previous=None):
         data['_token'] = self.session.csrf_token()

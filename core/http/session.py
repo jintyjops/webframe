@@ -8,7 +8,7 @@ import secrets
 import json
 import threading
 
-from webframe.core import app
+from webframe.core.app import App
 
 # XXX Race condition if with two requests to same session at once.
 class SessionFileStore:
@@ -178,12 +178,12 @@ class Session(object):
 
     def __init__(self, request):
         """Initialise session for this user."""
-        session_dir = app.userapp.settings.STORAGE_DIR + '/sessions/'
+        session_dir = App().settings().STORAGE_DIR + '/sessions/'
 
         self._purge_expired_sessions(session_dir)
 
         self.request = request
-        self.session_expiry = app.userapp.settings.SESSION_EXPIRY
+        self.session_expiry = App().settings().SESSION_EXPIRY
         try:
             # Check is Cookie actually exists
             self.request.headers['Cookie']

@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 from sqlalchemy import Column, Integer, String
-from webframe.core import app
+from webframe.core.app import App
 from webframe.utils.errors import abort
 
 class Model():
@@ -29,7 +29,7 @@ class Model():
     }
 
     def stage(self):
-        app.db.add(self)
+        App().db().add(self)
 
     def save(self):
         """Save the model."""
@@ -40,31 +40,31 @@ class Model():
 
     def delete(self):
         """Delete the model from the database."""
-        app.db.delete(self)
+        App().db().delete(self)
         Model.save_all()
 
     def fresh(self):
         """Get a fresh object from the db."""
-        return app.db.expire(self)
+        return App().db().expire(self)
 
     @classmethod
     def create(cls):
         """Create the table in the database. Does nothing if table exists."""
-        engine = app.userapp.settings.ENGINE
+        engine = App().settings().ENGINE
         if not engine.dialect.has_table(engine, cls.__tablename__):
-            cls.__table__.create(app.userapp.settings.ENGINE)
+            cls.__table__.create(App().settings().ENGINE)
 
     @classmethod
     def drop(cls):
         """Drop the table from the database. Nothing if table does not exist."""
-        engine = app.userapp.settings.ENGINE
+        engine = App().settings().ENGINE
         if engine.dialect.has_table(engine, cls.__tablename__):
-            cls.__table__.drop(app.userapp.settings.ENGINE)
+            cls.__table__.drop(App().settings().ENGINE)
 
     @classmethod
     def query(cls):
         """Create a new session query object for implementing class."""
-        return app.db.query(cls)
+        return App().db().query(cls)
 
     @classmethod
     def find(cls, pk):
@@ -85,9 +85,9 @@ class Model():
     def save_all():
         """Commit all staged changes to the database."""
         if Model.commit_external:
-            app.db.flush()
+            App().db().flush()
         else:
-            app.db.commit()
+            App().db().commit()
     
     @staticmethod
     def _remake_base():
@@ -97,7 +97,7 @@ class Model():
     @staticmethod
     def raw_command(command, **kwargs):
         """Apply a raw command to the database."""
-        connection = app.userapp.settings.ENGINE.connect()
+        connection = App().settings().ENGINE.connect()
         connection.execute(command, **kwargs)
         connection.commit()
 

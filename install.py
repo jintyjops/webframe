@@ -121,7 +121,7 @@ import {%name%}.routes as routes
 \"\"\"WSGI handler for starting the app.\"\"\"
 
 import logging
-from webframe.core.wsgi import WSGIApp, app_setup
+from webframe.core.wsgi import WSGIApp
 import {%name%}
 from {%name%} import settings
 
@@ -232,10 +232,11 @@ ERROR_HANDLERS = {
 ################
 
 from webframe.core import wsgi
+from webframe.core.app import App
 callbacks = []
 def app_setup():
     \"\"\"Setup the app.\"\"\"
-    wsgi.app_setup(APP)
+    App.app_setup(APP)
     
     # Logging
     if not storage.folder_exists('logs'):
@@ -373,7 +374,6 @@ def make_files(root, args):
     """Write data to files."""
 
     for filename, data in to_make['files'].items():
-        print(f'Creating: "{filename}"...')
         for name, val in args.items():
             data = data.replace('{%' + name + '%}', val)
         with open(os.path.join(root, filename), 'w') as f:

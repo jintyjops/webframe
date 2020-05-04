@@ -65,8 +65,6 @@ class DevApp(object):
         if self.app.settings.PORT:
             port = self.app.settings.PORT
 
-        # print('Serving on: ' + f'{host}:{port}')
-
         server = wsgiserver.WSGIServer(self.app.wsgi.app, host=host, port=port)
         server.start()
         

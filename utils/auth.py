@@ -1,10 +1,10 @@
 """Defines some generic auth functionality for login/logout."""
 
 import bcrypt
-from webframe.core import app
+from webframe.core.app import App
 
 def auth(request):
-    return Auth(request, app.userapp.settings.AUTH_MODEL)
+    return Auth(request, App().settings().AUTH_MODEL)
 
 def user():
     """

@@ -1,6 +1,6 @@
 """Base Seeder functionality."""
 
-from webframe.core import app
+from webframe.core.app import App
 from webframe.utils import db
 
 class Seeder:
@@ -11,7 +11,7 @@ class Seeder:
 
 def run_seeds(seed_list, engine):
     """Run seeders in given list."""
-    app.db = db.make_session(engine)
+    App().db() = db.make_session(engine)
 
     for seeder in seed_list:
         print('Seeding: ' + seeder.__class__.__name__)

@@ -2,7 +2,7 @@
 from urllib.parse import urlparse
 from parse import parse
 from webframe.utils.errors import abort
-from webframe.core import app
+from webframe.core.app import App
 
 class Router():
     """The router."""
@@ -15,8 +15,8 @@ class Router():
         Return the callable for this route.
         Returns Route instance.
         """
-        if app.userapp.settings.SERVE_PUBLIC:
-            if request.path.startswith(app.userapp.settings.RESOURCE_URL):
+        if App().settings().SERVE_PUBLIC:
+            if request.path.startswith(App().settings().RESOURCE_URL):
                 return ResourceRoute(request.path)
 
         found = None
@@ -103,4 +103,4 @@ class ResourceRoute():
     """Wrapper for public resource route."""
 
     def __init__(self, path):
-        self.path = path.split(app.userapp.settings.RESOURCE_URL)[1]
+        self.path = path.split(App().settings().RESOURCE_URL)[1]

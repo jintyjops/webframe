@@ -2,7 +2,7 @@
 
 import os, stat
 import shutil
-from webframe.core import app
+from webframe.core.app import App
 
 def store(data, folder=None, _file=None, binary=False, permissions=stat.S_IRWXU):
     """Store data in file in folder."""
@@ -58,7 +58,7 @@ def deletetree(folder):
 
 def path(folder=None, _file=None):
     """Get the main storage folder."""
-    p = f'{app.userapp.settings.STORAGE_DIR}'
+    p = f'{App().settings().STORAGE_DIR}'
     if folder is not None:
         p += '/' + folder
     if _file is not None:

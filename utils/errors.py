@@ -1,6 +1,7 @@
 """Utility function to throw errors."""
 
-from webframe.core import app
+
+from webframe.core.app import App
 
 def abort(code, message=None):
     """Throw a http status error."""
@@ -23,7 +24,7 @@ class HttpError(Exception):
         self.response = response
 
     def _generate_message(self, code, message):
-        if message is not None and app.userapp.settings.DEBUG:
+        if message is not None and App().settings().DEBUG:
             return self._surround_h1(str(code) + ': ' + message)
         
         if code == 404:

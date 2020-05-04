@@ -9,7 +9,7 @@ from webframe.utils import errors
 from webframe.utils import views
 from webframe.utils.auth import auth
 from webframe.forms.form import Form
-from webframe.core import app
+from webframe.core.app import App
 
 class Controller(object):
 
@@ -60,7 +60,7 @@ class Controller(object):
         """
         # To collect: global middleware, route specific middleware.
         # Global middleware takes priority.
-        middleware = app.userapp.settings.GLOBAL_MIDDLEWARE +\
+        middleware = App().settings().GLOBAL_MIDDLEWARE +\
                     self.request.route.middleware
 
         for mware in middleware:
@@ -70,7 +70,7 @@ class Controller(object):
         """
         Similar to __run_middleware(), except it is just global middleware.
         """
-        middleware = app.userapp.settings.GLOBAL_AFTER_MIDDLEWARE
+        middleware = App().settings().GLOBAL_AFTER_MIDDLEWARE
 
         for mware in middleware:
             mware(self.request, self.response)

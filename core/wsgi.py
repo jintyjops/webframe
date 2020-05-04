@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""The WSGI entry/communication point for the app."""
+"""The WSGI entry/communication point for the implementing application."""
 
 import os
 import sys
@@ -13,30 +13,18 @@ from webframe.core.route import Router, ResourceRoute
 from webframe.utils import storage
 from webframe.utils.errors import abort
 from webframe.utils import errors, db
-from webframe.core import app
+from webframe.core.app import App
 from threading import Semaphore
-
-def app_setup(userapp):
-    """Set up global variables."""
-    app.userapp = userapp
-    app.router = Router(app.userapp.routes.route.routes)
-    if app.db is not None:
-        app.db.close()
-    app.db = db.make_session(app.userapp.settings.ENGINE)
-    if WSGIApp.conn_pool is None:
-        WSGIApp.conn_pool = Semaphore(app.userapp.settings.MAX_CONNECTIONS)
 
 class WSGIApp(object):
     """The app entry point from a wsgi call."""
 
-    conn_pool = None
-
     def __init__(self, userapp):
-        app_setup(userapp)
+        App.app_setup(userapp)
 
     def  __call__(self, environ, start_response):
         """The app entry point."""
-        WSGIApp.conn_pool.acquire()
+        App().conn_pool().acquire()
         logging.info('New request incoming...')
         try:
             request = Request(environ)
@@ -57,7 +45,7 @@ class WSGIApp(object):
             status = f'{str(500)}'
             headers = [('Content-type', 'text/plain')]
             try:
-                body = app.userapp.settings.ERROR_HANDLERS[500](traceback.format_exc())
+                body = App().settings().ERROR_HANDLERS[500](traceback.format_exc())
                 headers = [('Content-type', 'text/html')]
             except Exception as e:
                 logging.error('Error while trying to get 500 error page.')
@@ -66,14 +54,14 @@ class WSGIApp(object):
             start_response(status, headers)
             return [body.encode('utf-8')]
         finally:
-            WSGIApp.conn_pool.release()
-            app.db.close()
+            App().conn_pool().release()
+            App().db().close()
         return response(environ, start_response)
 
     def generate(self, request, response):
         """Takes request and response objects and returns response."""
         try:
-            route = app.router.get_route(request)
+            route = App().router().get_route(request)
 
             if isinstance(route, ResourceRoute):
                 logging.info('Route is resource route.')
@@ -89,7 +77,7 @@ class WSGIApp(object):
                     response.text = rp
                     logging.info('Response fetched...')
                 except errors.DebugError as e:
-                    if app.userapp.settings.DEBUG:
+                    if App().settings().DEBUG:
                         response.status = 500
                         response.text = e.message
                     else:
@@ -101,7 +89,7 @@ class WSGIApp(object):
                 response.location = e.response.location
             response.status = e.code
             try:
-                response.text = app.userapp.settings.ERROR_HANDLERS[int(e.code)](e.message)
+                response.text = App().settings().ERROR_HANDLERS[int(e.code)](e.message)
             except (KeyError, ValueError):
                 response.text = e.message
 
@@ -115,7 +103,7 @@ class WSGIApp(object):
     def get_resource_response(self, response, route):
         """Serve a resource."""
         try:
-            path = app.userapp.settings.RESOURCE_DIR + '/' + route.path
+            path = App().settings().RESOURCE_DIR + '/' + route.path
             if not os.path.exists(path) or not os.path.isfile(path):
                 raise IOError
             return FileApp(path)
